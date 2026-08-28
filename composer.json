@@ -19,7 +19,7 @@
     "support": {
         "issues": "https://github.com/dvictorjhg/braidphp/issues",
         "source": "https://github.com/dvictorjhg/braidphp",
-        "docs": "https://github.com/dvictorjhg/braidphp/tree/main/docs"
+        "docs": "https://dvictorjhg.github.io/braidphp/"
     },
     "require": {
         "dvictorjhg/php-injector": "^1.0.1",
