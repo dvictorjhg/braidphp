@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="An attribute-driven PHP framework with module composition, routing, PSR HTTP messages, and a lightweight single-process TCP runtime.">
+    <title>BraidPHP | Attribute-driven PHP routing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/site.css">
+    <script type="module" src="assets/js/site.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap nav">
+            <div class="nav-brand">
+                <a class="brand" href="#top">
+                    <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+                        <path class="strand strand-one" d="M8 6c0 8 24 8 24 16s-24 8-24 16"></path>
+                        <path class="strand strand-two" d="M20 6c0 8-12 8-12 16s12 8 12 16"></path>
+                        <path class="strand strand-three" d="M32 6c0 8-12 8-12 16s12 8 12 16"></path>
+                    </svg>
+                    <span class="brand-copy">
+                        <span class="brand-name">Braid<span class="brand-accent">PHP</span></span>
+                        <span class="version" data-i18n="brand.version">1.0.0</span>
+                    </span>
+                </a>
+                <div class="nav-tools">
+                    <fieldset class="theme-toggle">
+                        <legend class="sr-only" data-i18n="theme.label">Theme</legend>
+                        <button class="theme-button" type="button" data-theme-choice="light" aria-pressed="true">
+                            <span class="theme-icon" aria-hidden="true">sun</span>
+                            <span data-i18n="theme.light">Light</span>
+                        </button>
+                        <button class="theme-button" type="button" data-theme-choice="dark" aria-pressed="false">
+                            <span class="theme-icon" aria-hidden="true">moon</span>
+                            <span data-i18n="theme.dark">Dark</span>
+                        </button>
+                    </fieldset>
+                    <label class="language-picker">
+                        <span class="sr-only" data-i18n="language.label">Language</span>
+                        <select id="language-select" aria-label="Language" data-i18n-aria-label="language.label">
+                            <option value="en" data-i18n="language.english">EN</option>
+                            <option value="es" data-i18n="language.spanish">ES</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+            <nav class="nav-links" aria-label="Documentation sections" data-i18n-aria-label="nav.sections">
+                <a href="#start" data-i18n="nav.start">Start</a>
+                <a href="#modules" data-i18n="nav.modules">Modules</a>
+                <a href="#routing" data-i18n="nav.routing">Routing</a>
+                <a href="#http" data-i18n="nav.http">HTTP</a>
+                <a href="#runtime" data-i18n="nav.runtime">Runtime</a>
+                <a href="#api" data-i18n="nav.api">API</a>
+                <a href="#development" data-i18n="nav.development">Development</a>
+                <a class="nav-github" href="https://github.com/dvictorjhg/braidphp">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="top">
+        <section class="hero">
+            <div class="wrap hero-grid">
+                <div class="hero-copy">
+                    <p class="eyebrow" data-i18n="hero.eyebrow">PHP 8.4+ / PSR-7 / TCP</p>
+                    <h1 data-i18n="hero.title">Route the request. Keep the rest native.</h1>
+                    <p class="hero-lede" data-i18n="hero.lede">An attribute-driven PHP framework for composing modules, matching routes, and serving small HTTP applications without hiding the request.</p>
+                    <div class="hero-actions">
+                        <a class="button-link" href="#start"><span data-i18n="hero.start">Start with the guide</span><span aria-hidden="true">-&gt;</span></a>
+                        <a class="button-link secondary" href="https://github.com/dvictorjhg/braidphp"><span data-i18n="hero.github">View on GitHub</span><span aria-hidden="true">+</span></a>
+                    </div>
+                    <div class="hero-facts" aria-label="Framework facts" data-i18n-aria-label="hero.factsAria">
+                        <div><strong>09</strong><span data-i18n="hero.factMethods">HTTP methods</span></div>
+                        <div><strong>PSR</strong><span data-i18n="hero.factMessages">message contracts</span></div>
+                        <div><strong>1P</strong><span data-i18n="hero.factProcess">process by design</span></div>
+                    </div>
+                </div>
+                <div class="quickstart code-panel">
+                    <div class="panel-topline">
+                        <span class="quickstart-label" data-i18n="hero.quickstartLabel">A useful first file</span>
+                        <span class="panel-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    </div>
+                    <pre><code>&lt;?php
+
+declare(strict_types=1);
+
+use dvictorjhg\braidphp\Core\App;
+use dvictorjhg\braidphp\Core\Attributes\Module;
+use dvictorjhg\braidphp\Router\Attributes\Get;
+use dvictorjhg\braidphp\Router\Attributes\Route;
+use dvictorjhg\braidphp\Router\Http\Request;
+use dvictorjhg\braidphp\Router\HttpModule;
+use dvictorjhg\braidphp\Router\Router;
+
+#[Route(path: '/api')]
+final class GreetingController
+{
+    #[Get('/hello/:name')]
+    public function hello(Request $request): string
+    {
+        return 'Hello ' . ($request-&gt;getRouteParam('name') ?? '') . '!';
+    }
+}
+
+#[Module(
+    imports: [HttpModule::class],
+    controllers: [GreetingController::class]
+)]
+final class AppModule {}
+
+$app = new App();
+$app-&gt;bootstrapModule(new AppModule());
+$app-&gt;listen(port: '8000');</code></pre>
+                    <div class="example-output">
+                        <span class="example-output-label" data-i18n="example.expectedOutput">Request</span>
+                        <pre><code>curl http://127.0.0.1:8000/api/hello/Ada
+
+Hello Ada!</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="start">
+            <div class="wrap">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-number" data-i18n="start.number">01 / Start here</span>
+                        <h2 data-i18n="start.title">Run the example in three steps.</h2>
+                    </div>
+                    <p data-i18n="start.lede">Install the repository dependencies, start its front controller, then call a real route from a second terminal.</p>
+                </div>
+                <div class="start-grid">
+                    <article class="install-block">
+                        <div class="block-label" data-i18n="start.installTitle">01 / Install</div>
+                        <p data-i18n="start.installText">From the repository root, fetch the dependencies used by the example.</p>
+                        <pre><code>composer install</code></pre>
+                    </article>
+                    <article class="install-block accent-block">
+                        <div class="block-label" data-i18n="start.runTitle">02 / Run</div>
+                        <p data-i18n="start.runText">Start the listener on port 8000 and keep this terminal open.</p>
+                        <pre><code>php public/index.php</code></pre>
+                    </article>
+                    <article class="install-block try-block">
+                        <div class="block-label" data-i18n="start.tryTitle">03 / Try</div>
+                        <p data-i18n="start.tryText">In a second terminal, call the hello route and check its response.</p>
+                        <pre><code>curl http://127.0.0.1:8000/api/hello/Ada
+
+# Hello Ada!</code></pre>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section pale" id="modules">
+            <div class="wrap">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-number" data-i18n="modules.number">02 / Modules</span>
+                        <h2 data-i18n="modules.title">Compose the application in four moves.</h2>
+                    </div>
+                    <p data-i18n="modules.lede">A module is the boundary where imported infrastructure, injectable providers, route controllers, and startup work become one graph.</p>
+                </div>
+                <div class="module-layout">
+                    <div class="code-panel module-code">
+                        <div class="panel-topline">
+                            <span class="quickstart-label">AppModule.php</span>
+                            <span class="code-badge">PHP</span>
+                        </div>
+                        <pre><code>&lt;?php
+
+use dvictorjhg\braidphp\Core\Attributes\Module;
+use dvictorjhg\braidphp\Router\HttpModule;
+
+#[Module(
+    imports: [HttpModule::class],
+    providers: [Greeter::class],
+    controllers: [GreetingController::class],
+    bootstrap: [CacheWarmup::class =&gt; ['prefix' =&gt; 'app']]
+)]
+final class AppModule
+{
+}</code></pre>
+                    </div>
+                    <div class="module-ledger">
+                        <div class="ledger-row">
+                            <span class="ledger-key">01</span>
+                            <div><strong data-i18n="modules.importsTitle">imports</strong><p data-i18n="modules.importsText">Bootstrap module classes or objects first.</p></div>
+                        </div>
+                        <div class="ledger-row">
+                            <span class="ledger-key">02</span>
+                            <div><strong data-i18n="modules.providersTitle">providers</strong><p data-i18n="modules.providersText">Register classes, values, aliases, or factories with PHPInjector.</p></div>
+                        </div>
+                        <div class="ledger-row">
+                            <span class="ledger-key">03</span>
+                            <div><strong data-i18n="modules.controllersTitle">controllers</strong><p data-i18n="modules.controllersText">Scan classes and objects for route attributes.</p></div>
+                        </div>
+                        <div class="ledger-row">
+                            <span class="ledger-key">04</span>
+                            <div><strong data-i18n="modules.bootstrapTitle">bootstrap</strong><p data-i18n="modules.bootstrapText">Resolve keyed startup classes after the graph is ready.</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="module-flow" aria-label="Module bootstrap order" data-i18n-aria-label="modules.flowAria">
+                    <div class="flow-node"><span>01</span><strong data-i18n="modules.flowImport">Import</strong><small>HttpModule</small></div>
+                    <span class="flow-arrow" aria-hidden="true">-&gt;</span>
+                    <div class="flow-node"><span>02</span><strong data-i18n="modules.flowInject">Inject</strong><small>providers</small></div>
+                    <span class="flow-arrow" aria-hidden="true">-&gt;</span>
+                    <div class="flow-node"><span>03</span><strong data-i18n="modules.flowScan">Scan</strong><small>controllers</small></div>
+                    <span class="flow-arrow" aria-hidden="true">-&gt;</span>
+                    <div class="flow-node"><span>04</span><strong data-i18n="modules.flowStart">Start</strong><small>bootstrap</small></div>
+                </div>
+                <div class="callout">
+                    <span class="callout-mark" aria-hidden="true">!</span>
+                    <div>
+                        <strong data-i18n="modules.noteTitle">The router is a provider</strong>
+                        <p data-i18n="modules.noteText">Import HttpModule or register Router::class yourself before controllers are processed. The module scanner does not invent an application graph.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section ink" id="routing">
+            <div class="wrap">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-number" data-i18n="routing.number">03 / Routing</span>
+                        <h2 data-i18n="routing.title">Match paths where they are declared.</h2>
+                    </div>
+                    <p class="muted" data-i18n="routing.lede">Class routes establish a prefix. Method attributes finish the path. Captures travel to the action on a request copy.</p>
+                </div>
+                <div class="routing-grid">
+                    <div class="code-panel routing-code">
+                        <div class="panel-topline">
+                            <span class="quickstart-label">GreetingController.php</span>
+                            <span class="code-badge">ROUTES</span>
+                        </div>
+                        <pre><code>#[Route(path: '/api')]
+final class GreetingController
+{
+    public function __construct(private Greeter $greeter)
+    {
+    }
+
+    #[Get('/hello/:name', pathMatch: 'full')]
+    public function greet(Request $request): string
+    {
+        $name = $request-&gt;getRouteParam('name') ?? '';
+        return $this-&gt;greeter-&gt;greeting($name);
+    }
+
+    #[Post('/hello')]
+    public function create(Request $request): Response
+    {
+        return new Response(201, body: (string) $request-&gt;getBody());
+    }
+}</code></pre>
+                    </div>
+                    <div class="route-inspector">
+                        <div class="inspector-heading"><span data-i18n="routing.inspectTitle">A request through the tree</span><code>GET /api/hello/Ada</code></div>
+                        <div class="path-track">
+                            <div class="path-step prefix"><small data-i18n="routing.classPrefix">class prefix</small><code>/api</code></div>
+                            <span class="track-arrow" aria-hidden="true">-&gt;</span>
+                            <div class="path-step method"><small data-i18n="routing.methodPath">method path</small><code>/hello</code></div>
+                            <span class="track-arrow" aria-hidden="true">-&gt;</span>
+                            <div class="path-step capture"><small data-i18n="routing.capture">capture</small><code>:name = Ada</code></div>
+                        </div>
+                        <div class="route-result"><span class="result-dot"></span><span data-i18n="routing.result">RouteMatch -> request copy -> action</span></div>
+                        <div class="route-details">
+                            <div><strong data-i18n="routing.queryTitle">Query</strong><code>/search?term=php</code><p data-i18n="routing.queryText">Read from getQueryParams().</p></div>
+                            <div><strong data-i18n="routing.matchTitle">Path match</strong><code>prefix / full</code><p data-i18n="routing.matchText">Use full when a node must consume the remaining path.</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="routing-reference">
+                    <div class="reference-heading"><h3 data-i18n="routing.methodsTitle">Method attributes</h3><p data-i18n="routing.methodsText">Each shortcut fixes the HttpMethod value; Route accepts a combined integer mask for multi-method nodes.</p></div>
+                    <div class="method-list">
+                        <span><b>GET</b><code>#[Get]</code></span>
+                        <span><b>HEAD</b><code>#[Head]</code></span>
+                        <span><b>POST</b><code>#[Post]</code></span>
+                        <span><b>PUT</b><code>#[Put]</code></span>
+                        <span><b>DELETE</b><code>#[Delete]</code></span>
+                        <span><b>CONNECT</b><code>#[Connect]</code></span>
+                        <span><b>OPTIONS</b><code>#[Options]</code></span>
+                        <span><b>TRACE</b><code>#[Trace]</code></span>
+                        <span><b>PATCH</b><code>#[Patch]</code></span>
+                    </div>
+                </div>
+                <div class="custom-match">
+                    <div>
+                        <span class="small-label" data-i18n="routing.customLabel">Programmatic matcher</span>
+                        <h3 data-i18n="routing.customTitle">Return consumed segments, or return null.</h3>
+                        <p data-i18n="routing.customText">Custom matchers receive path segments and the route. They return UrlMatcherResult with captured string parameters.</p>
+                    </div>
+                    <pre><code>use dvictorjhg\braidphp\Router\Classes\Route;
+use dvictorjhg\braidphp\Router\Classes\UrlMatcherResult;
+use dvictorjhg\braidphp\Router\Http\HttpMethod;
+
+$router-&gt;setRoutes(new Route(
+    httpMethod: HttpMethod::GET,
+    matcher: static function (array $parts, Route $route): ?UrlMatcherResult {
+        return ($parts[0] ?? null) === 'health'
+            ? new UrlMatcherResult(['health'])
+            : null;
+    },
+    action: [HealthController::class, 'show'],
+));</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="http">
+            <div class="wrap">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-number" data-i18n="http.number">04 / HTTP messages</span>
+                        <h2 data-i18n="http.title">Change a message by making a message.</h2>
+                    </div>
+                    <p data-i18n="http.lede">Request, response, URI, and stream objects follow PSR contracts. Header and URI changes are immutable and explicit.</p>
+                </div>
+                <div class="http-grid">
+                    <article class="http-card">
+                        <div class="card-kicker">REQUEST</div>
+                        <h3 data-i18n="http.requestTitle">Headers and route data</h3>
+                        <p data-i18n="http.requestText">Query parameters are parsed on construction; route parameters arrive through withRouteParams().</p>
+                        <pre><code>$request = new Request(
+    method: HttpMethod::GET,
+    uri: '/health?verbose=1',
+);
+
+$traced = $request
+    -&gt;withHeader('X-Trace', 'one')
+    -&gt;withAddedHeader('X-Trace', 'two')
+    -&gt;withRouteParams(['scope' =&gt; 'live']);
+
+echo $traced-&gt;getQueryParams()['verbose'];</code></pre>
+                        <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code>1</code></div>
+                    </article>
+                    <article class="http-card response-card">
+                        <div class="card-kicker">RESPONSE</div>
+                        <h3 data-i18n="http.responseTitle">Bodies become streams</h3>
+                        <p data-i18n="http.responseText">Pass scalar content or a PSR stream. A reason phrase is inferred when the status code is known.</p>
+                        <pre><code>$response = new Response(
+    statusCode: 201,
+    headers: ['X-Request' =&gt; 'one'],
+    body: 'created',
+);
+
+echo $response-&gt;getReasonPhrase();
+echo (string) $response;</code></pre>
+                        <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code>Created
+Content-Length: 7</code></div>
+                    </article>
+                </div>
+                <div class="api-table-wrap">
+                    <table class="api-table">
+                        <thead>
+                            <tr><th data-i18n="http.tableMember">Member</th><th data-i18n="http.tableBehavior">Behavior</th><th data-i18n="http.tableReturns">Returns</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>getHeader()</code></td><td data-i18n="http.headerBehavior">Case-insensitive lookup</td><td><code>list&lt;string&gt;</code></td></tr>
+                            <tr><td><code>withHeader()</code></td><td data-i18n="http.withHeaderBehavior">Replace values on a copy</td><td><code>MessageInterface</code></td></tr>
+                            <tr><td><code>withAddedHeader()</code></td><td data-i18n="http.withAddedBehavior">Append values on a copy</td><td><code>MessageInterface</code></td></tr>
+                            <tr><td><code>getBody()</code> / <code>Stream::of()</code></td><td data-i18n="http.bodyBehavior">Read or create stream content</td><td><code>StreamInterface</code></td></tr>
+                            <tr><td><code>withUri()</code></td><td data-i18n="http.uriBehavior">Replace URI and refresh query data</td><td><code>RequestInterface</code></td></tr>
+                            <tr><td><code>(string) $response</code></td><td data-i18n="http.serializeBehavior">Serialize status, headers, and body</td><td><code>HTTP/1.1 ...</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="note-line"><strong data-i18n="http.noteTitle">Serialization detail</strong><span data-i18n="http.noteText">Content-Type defaults to text/plain and Content-Length is calculated only when the response is converted to a string and those headers are absent.</span></div>
+            </div>
+        </section>
+
+        <section class="section rust" id="runtime">
+            <div class="wrap">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-number" data-i18n="runtime.number">05 / Runtime</span>
+                        <h2 data-i18n="runtime.title">A straight line from socket to response.</h2>
+                    </div>
+                    <p data-i18n="runtime.lede">The runtime uses PHP streams to accept a request, resolve its action, and write one HTTP response. There is no hidden worker pool.</p>
+                </div>
+                <div class="runtime-flow" aria-label="Request handling flow" data-i18n-aria-label="runtime.flowAria">
+                    <div class="runtime-step"><span>01</span><strong data-i18n="runtime.socket">Accept</strong><small>stream_socket_accept</small></div>
+                    <div class="runtime-step"><span>02</span><strong data-i18n="runtime.parse">Parse</strong><small>Request::fromResource</small></div>
+                    <div class="runtime-step"><span>03</span><strong data-i18n="runtime.match">Match</strong><small>Router::processRoutes</small></div>
+                    <div class="runtime-step"><span>04</span><strong data-i18n="runtime.resolve">Resolve</strong><small>PHPInjector</small></div>
+                    <div class="runtime-step"><span>05</span><strong data-i18n="runtime.write">Write</strong><small>Response::__toString</small></div>
+                </div>
+                <div class="runtime-grid">
+                    <div class="runtime-code code-panel">
+                        <div class="panel-topline"><span class="quickstart-label" data-i18n="runtime.commandTitle">Start the listener</span><span class="code-badge">BLOCKING</span></div>
+                        <pre><code>$app-&gt;listen(
+    address: '0.0.0.0',
+    port: '8000',
+);</code></pre>
+                        <p data-i18n="runtime.commandText">Use a process manager, container platform, or reverse proxy when the application needs more than one worker.</p>
+                    </div>
+                    <div class="status-grid">
+                        <div class="status-item status-404"><strong>404</strong><div><span data-i18n="runtime.notFoundTitle">No matching route</span><p data-i18n="runtime.notFoundText">handleRequest() returns Not Found.</p></div></div>
+                        <div class="status-item status-500"><strong>500</strong><div><span data-i18n="runtime.serverErrorTitle">Unhandled throwable</span><p data-i18n="runtime.serverErrorText">The socket loop writes Server Error with the exception message.</p></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section pale" id="api">
+            <div class="wrap">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-number" data-i18n="api.number">06 / API</span>
+                        <h2 data-i18n="api.title">The public surface, in one scan.</h2>
+                    </div>
+                    <p data-i18n="api.lede">Start with App and the attributes. Reach for the lower-level router and HTTP classes when you need precise control.</p>
+                </div>
+                <div class="api-reference-wrap">
+                    <table class="api-reference">
+                        <thead><tr><th data-i18n="api.member">Member</th><th data-i18n="api.role">Role</th><th data-i18n="api.contract">Contract</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>App</code></td><td data-i18n="api.appRole">Bootstraps modules and handles requests</td><td><code>bootstrapModule()</code> <code>handleRequest()</code> <code>listen()</code></td></tr>
+                            <tr><td><code>#[Module]</code></td><td data-i18n="api.moduleRole">Declares application composition</td><td><code>imports</code> <code>providers</code> <code>controllers</code> <code>bootstrap</code></td></tr>
+                            <tr><td><code>Router</code></td><td data-i18n="api.routerRole">Stores and processes route trees</td><td><code>setRoutes()</code> <code>processRoutes()</code></td></tr>
+                            <tr><td><code>RouteScanner</code></td><td data-i18n="api.scannerRole">Turns attributes into route objects</td><td><code>scan()</code> -> <code>Route</code> or <code>RouteArray</code></td></tr>
+                            <tr><td><code>RouteMatch</code></td><td data-i18n="api.matchRole">Carries the selected route and captures</td><td><code>route</code> <code>params</code></td></tr>
+                            <tr><td><code>Request</code> / <code>Response</code></td><td data-i18n="api.messageRole">PSR HTTP request and response messages</td><td>headers, URI, body, status</td></tr>
+                            <tr><td><code>Uri</code> / <code>Stream</code></td><td data-i18n="api.primitiveRole">Immutable URI and PSR stream primitives</td><td><code>with*()</code> <code>Stream::of()</code></td></tr>
+                            <tr><td><code>UrlMatcherResult</code></td><td data-i18n="api.matcherRole">Result returned by a custom matcher</td><td><code>consumed</code> <code>params</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="api-links">
+                    <a href="../README.md"><span data-i18n="api.readme">README</span><span aria-hidden="true">-&gt;</span></a>
+                    <a href="../CHANGELOG.md"><span data-i18n="api.changelog">Changelog</span><span aria-hidden="true">-&gt;</span></a>
+                    <a href="../SECURITY.md"><span data-i18n="api.security">Security policy</span><span aria-hidden="true">-&gt;</span></a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="development">
+            <div class="wrap development-grid">
+                <div>
+                    <span class="section-number" data-i18n="development.number">07 / Development</span>
+                    <h2 data-i18n="development.title">Read the source. Run the checks.</h2>
+                    <p data-i18n="development.lede">The feedback loop is deliberately plain: Composer validation, platform checks, PHPStan, PHP_CodeSniffer, and PHPUnit.</p>
+                    <div class="development-links">
+                        <a href="../CONTRIBUTING.md" data-i18n="development.contributing">Contributing</a>
+                        <a href="../CODE_OF_CONDUCT.md" data-i18n="development.conduct">Code of Conduct</a>
+                        <a href="../AI_USE_POLICY.md" data-i18n="development.ai">AI use policy</a>
+                    </div>
+                </div>
+                <div class="command-panel code-panel">
+                    <div class="panel-topline"><span class="quickstart-label" data-i18n="development.commandsTitle">Commands</span><span class="code-badge">CI</span></div>
+                    <pre><code>composer install
+composer validate --strict
+composer check-platform-reqs
+composer analyse
+composer check-style
+composer test</code></pre>
+                    <p class="command-note" data-i18n="development.ciText">CI runs this suite on PHP 8.4 and 8.5. The production image is PHP 8.5.9.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap footer-inner">
+            <span data-i18n="footer.text">BraidPHP / attribute-driven PHP routing and runtime</span>
+            <a href="https://github.com/dvictorjhg/braidphp" data-i18n="footer.github">GitHub repository</a>
+        </div>
+    </footer>
+</body>
+</html>

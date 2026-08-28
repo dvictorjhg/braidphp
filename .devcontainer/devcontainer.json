@@ -1,0 +1,95 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-docker-compose
+{
+    "name": "braidphp",
+
+    // Keep the compose file at the repo root so build context and Dockerfile paths share the same base.
+    "dockerComposeFile": "../docker-compose.devcontainer.yml",
+
+    // The 'service' property is the name of the service for the container that VS Code should
+    // use. Update this value and .devcontainer/docker-compose.yml to the real service name.
+    "service": "php",
+
+    "remoteEnv": {
+        "PODMAN_USERNS": "keep-id"
+    },
+
+    "workspaceFolder": "/app",
+
+    // The username to use for spawning processes in the container including lifecycle scripts and any remote editor/IDE server process.
+    // The default is the same user as the container.
+    "remoteUser": "www-data",
+
+    // The user the container will be started with.
+    // The default is the user on the Docker image.
+    "containerUser": "www-data",
+
+    // A command to run after starting the container.
+    // This command is run after "postCreateCommand" and before "postAttachCommand".
+    // If this is a single string, it will be run in a shell.
+    // If this is an array of strings, it will be run as a single command without shell.
+    // If this is an object, each provided command will be run in parallel.
+    // "postStartCommand": "run-composer.sh",
+
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    // "features": {},
+
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    "forwardPorts": [8000, 9000, 9003],
+
+    // Uncomment the next line if you want start specific services in your Docker Compose config.
+    // "runServices": [],
+
+    // Uncomment the next line if you want to keep your containers running after VS Code shuts down.
+    // "shutdownAction": "none",
+
+    // Uncomment the next line to run commands after the container is created.
+    // "postCreateCommand": "cat /etc/os-release",
+
+    // Configure tool-specific properties.
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // PHP
+                "devsense.phptools-vscode",
+                "devsense.composer-php-vscode",
+                "devsense.intelli-php-vscode",
+                "devsense.profiler-php-vscode",
+                "mehedidracula.php-namespace-resolver",
+                "sanderronde.phpstan-vscode",
+                "valeryanm.vscode-phpsab",
+                "xdebug.php-debug",
+                // Others
+                "mikestead.dotenv",
+                "eamodio.gitlens",
+                "ritwickdey.liveserver",
+                "SonarSource.sonarlint-vscode",
+                "ms-azuretools.vscode-docker",
+                "ms-vscode-remote.remote-containers"
+            ],
+            "settings": {
+                "php.inlayHints.parameters.byReference": true,
+                "php.inlayHints.parameters.enabled": false,
+                "php.inlayHints.types.return": true,
+                "phpstan.showTypeOnHover": true,
+                "namespaceResolver.showMessageOnStatusBar": true,
+                "namespaceResolver.sortAlphabetically": true,
+                "namespaceResolver.sortNatural": true
+            }
+        }
+    },
+
+    // The portsAttributes and otherPortsAttributes properties allow you to map
+    // default port options for one or more manually or automatically forwarded ports.
+    // Ref: https://containers.dev/implementors/json_reference/#port-attributes
+    "portsAttributes": {
+        "9000": {
+            "label": "php-fpm",
+            "onAutoForward": "ignore"
+        },
+        "9003": {
+            "label": "xdebug",
+            "onAutoForward": "ignore"
+        }
+    }
+}

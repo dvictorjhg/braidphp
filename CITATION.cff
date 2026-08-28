@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+title: BraidPHP
+message: If you use this project in research, documentation, or derivative work, please cite it.
+type: software
+authors:
+  - given-names: Victor Jose
+    family-names: Holgado Gallegos
+    email: vihoga@hotmail.es
+    affiliation: Independent Maintainer
+repository-code: https://github.com/dvictorjhg/braidphp
+url: https://github.com/dvictorjhg/braidphp
+license: Apache-2.0
+abstract: Attribute-driven PHP framework with module composition, routing, PSR HTTP messages, and a lightweight TCP runtime.

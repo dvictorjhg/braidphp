@@ -1,0 +1,11 @@
+# PHPUnit
+cache
+coverage
+logs
+.phpunit.result.cache
+
+# Composer
+vendor
+
+# System
+.DS_Store

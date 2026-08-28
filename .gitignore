@@ -1,0 +1,19 @@
+# PHPUnit
+.phpunit.cache
+.phpunit.result.cache
+build/
+cache
+coverage/*
+!coverage/.gitkeep
+debug/*
+!debug/.gitkeep
+logs
+
+# Composer
+composer.lock
+vendor
+
+# System
+.DS_Store
+.zsh_history
+.zshrc

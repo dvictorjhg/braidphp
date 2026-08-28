@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<ruleset name="BraidPHP">
+    <description>The coding standard of the BraidPHP package</description>
+
+    <!-- Use the PSR12 Standard-->
+    <rule ref="PSR12" />
+</ruleset>

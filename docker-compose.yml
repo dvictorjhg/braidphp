@@ -1,0 +1,24 @@
+name: braidphp
+services:
+    php:
+        container_name: braidphp-${ENVIRONMENT}
+        image: localhost/dvictorjhg/braidphp:${DOCKER_IMAGE_TAG}
+        build:
+            context: .
+            args:
+                - APP_PATH=${APP_PATH}
+                - ENVIRONMENT=${ENVIRONMENT}
+            dockerfile: docker/php/php.Dockerfile
+            target: ${ENVIRONMENT}
+        env_file: .env
+        init: true
+        ports:
+            - ${SERVER_PORT}:${SERVER_PORT}
+        restart: unless-stopped
+        volumes:
+            - ./public:${APP_PATH}/public
+            - ./src:${APP_PATH}/src
+            - ./Example:${APP_PATH}/Example
+            - ./tests:${APP_PATH}/tests
+            - ./coverage:${APP_PATH}/coverage
+            - ./debug:/tmp/xdebug
