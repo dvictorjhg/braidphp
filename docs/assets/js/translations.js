@@ -2,7 +2,7 @@ const translations = {
     en: {
         "document.title": "BraidPHP | Attribute-driven PHP routing",
         "document.description": "An attribute-driven PHP framework with module composition, routing, PSR HTTP messages, and a lightweight single-process TCP runtime.",
-        "brand.version": "1.0.0",
+        "brand.version": "1.0.1",
         "nav.start": "Start",
         "nav.modules": "Modules",
         "nav.routing": "Routing",
@@ -136,7 +136,7 @@ const translations = {
     es: {
         "document.title": "BraidPHP | Routing PHP basado en atributos",
         "document.description": "Un framework PHP basado en atributos con composicion de modulos, routing, mensajes HTTP PSR y un runtime TCP ligero de un solo proceso.",
-        "brand.version": "1.0.0",
+        "brand.version": "1.0.1",
         "nav.start": "Inicio",
         "nav.modules": "Modulos",
         "nav.routing": "Routing",
