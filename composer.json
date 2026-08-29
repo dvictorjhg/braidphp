@@ -37,14 +37,19 @@
     },
     "autoload": {
         "psr-4": {
-            "dvictorjhg\\braidphp\\": "src/",
-            "dvictorjhg\\braidphp\\Example\\": "Example/"
+            "dvictorjhg\\braidphp\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "dvictorjhg\\braidphp\\tests\\": "tests/"
+            "dvictorjhg\\braidphp\\tests\\": "tests/",
+            "dvictorjhg\\braidphp\\Example\\": "Example/"
         }
+    },
+    "archive": {
+        "exclude": [
+            "/Example/"
+        ]
     },
     "scripts": {
         "analyse": "phpstan analyse --no-progress --memory-limit=512M",
