@@ -107,7 +107,7 @@ class Stream implements StreamInterface
      */
     public static function of(mixed $resource, ?int $size = null): StreamInterface
     {
-        return \dvictorjhg\braidphp\Router\Http\StreamFactory::create($resource, $size);
+        return StreamFactory::create($resource, $size);
     }
 
     /**
@@ -385,8 +385,7 @@ class Stream implements StreamInterface
      */
     public function __serialize(): array
     {
-        // We can't serialize resources, so we save the content and metadata
-        $metadata = isset($this->stream) ? \stream_get_meta_data($this->stream) : [];
+        // Resources cannot be serialized, so preserve the content and stream capabilities.
         $content = (string) $this;
 
         return [
@@ -394,8 +393,7 @@ class Stream implements StreamInterface
             'size' => $this->size,
             'seekable' => $this->seekable,
             'writable' => $this->writable,
-            'readable' => $this->readable,
-            'metadata' => $metadata
+            'readable' => $this->readable
         ];
     }
 
@@ -424,7 +422,7 @@ class Stream implements StreamInterface
         }
 
         // Create a new stream with the saved content
-        $stream = \dvictorjhg\braidphp\Router\Http\StreamFactory::createTemporaryStream(
+        $stream = StreamFactory::createTemporaryStream(
             'Failed to create stream during unserialization'
         );
 

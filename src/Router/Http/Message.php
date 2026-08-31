@@ -31,13 +31,7 @@ abstract class Message implements MessageInterface
             ];
         }
 
-        if ($body instanceof StreamInterface) {
-            $this->body = $body;
-        } elseif ($body === null) {
-            $this->body = Stream::of('');
-        } else {
-            $this->body = Stream::of($body);
-        }
+        $this->body = $body instanceof StreamInterface ? $body : Stream::of($body);
     }
 
     #[\Override]

@@ -6,7 +6,6 @@ namespace dvictorjhg\braidphp\Core;
 
 use PHPInjector\Container\Container;
 use PHPInjector\DI\Injector;
-use dvictorjhg\braidphp\Core\AppException;
 use dvictorjhg\braidphp\Core\Attributes\Module;
 use dvictorjhg\braidphp\Core\Scanners\ModuleScanner;
 use dvictorjhg\braidphp\Router\Http\Request;

@@ -15,8 +15,8 @@ class RouteScanner
      *
      * @param class-string|object $class The class to scan for route attributes.
      *
-      * @return Route|RouteArray|null A Route object if the class has a class route,
-      *     a RouteArray object if it only has method routes, or null if no route
+     * @return Route|RouteArray|null A Route object if the class has a class route,
+     *     a RouteArray object if it only has method routes, or null if no route
      *     attributes are found.
      */
     public static function scan(object|string $class): Route|RouteArray|null
@@ -24,12 +24,7 @@ class RouteScanner
         $reflectionClass = new ReflectionClass($class);
         $className = $reflectionClass->getName();
 
-        /** @var \ReflectionMethod[] */
         $methods = $reflectionClass->getMethods();
-
-        if (empty($methods)) {
-            return null;
-        }
 
         /** @var array<string, array<string, ReflectionAttribute<RouteAttribute>>> */
         $methodsRouteAttributes = [];

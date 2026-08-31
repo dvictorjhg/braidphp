@@ -16,7 +16,7 @@ final class StreamFactory
             \is_scalar($resource) => self::fromScalar($resource, $size),
             \is_resource($resource) => new Stream($resource, $size),
             \is_object($resource) => self::fromObject($resource, $size),
-            $resource === null => self::fromNull($size),
+            $resource === null => new Stream(self::createTemporaryStream(), $size),
             default => throw new \InvalidArgumentException(
                 'Invalid resource type: ' . \gettype($resource)
             ),
@@ -51,11 +51,6 @@ final class StreamFactory
         }
 
         throw new \InvalidArgumentException('Object must be stringable or implement StreamInterface');
-    }
-
-    private static function fromNull(?int $size): StreamInterface
-    {
-        return new Stream(self::createTemporaryStream(), $size);
     }
 
     /**

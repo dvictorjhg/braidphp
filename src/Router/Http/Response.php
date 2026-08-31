@@ -91,8 +91,8 @@ class Response extends Message implements ResponseInterface
     ) {
         parent::__construct($headers, $body, $protocolVersion);
 
-        if ($reasonPhrase === '' && isset(self::$statusPhrases[$this->statusCode])) {
-            $reasonPhrase = self::$statusPhrases[$this->statusCode];
+        if ($reasonPhrase === '') {
+            $reasonPhrase = self::$statusPhrases[$this->statusCode] ?? '';
         }
         $this->reasonPhrase = $reasonPhrase;
     }
@@ -112,8 +112,8 @@ class Response extends Message implements ResponseInterface
 
         $static = clone $this;
         $static->statusCode = (int) $code;
-        if ($reasonPhrase === '' && isset(self::$statusPhrases[$static->statusCode])) {
-            $reasonPhrase = $static->reasonPhrase = self::$statusPhrases[$static->statusCode];
+        if ($reasonPhrase === '') {
+            $reasonPhrase = self::$statusPhrases[$static->statusCode] ?? '';
         }
         $static->reasonPhrase = $reasonPhrase;
         return $static;
@@ -131,12 +131,12 @@ class Response extends Message implements ResponseInterface
 
         // Add headers
         foreach ($this->getHeaders() as $name => $values) {
-            foreach ((array) $values as $value) {
+            foreach ($values as $value) {
                 $responseStr .= "{$name}: {$value}\r\n";
             }
         }
 
-        // Ensure Content-Type and Content-Length
+        // Add defaults required for the wire response.
         if (!$this->hasHeader('Content-Type')) {
             $responseStr .= "Content-Type: text/plain\r\n";
         }

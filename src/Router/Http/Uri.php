@@ -40,7 +40,6 @@ class Uri implements UriInterface
             $this->path = UriNormalizer::normalizePath($parts['path'] ?? '');
             $this->query = UriNormalizer::normalizeQuery($parts['query'] ?? '');
             $this->fragment = isset($parts['fragment']) ? UriNormalizer::normalizeFragment($parts['fragment']) : '';
-            $this->pathParts = UriNormalizer::splitPath($this->path);
         } else {
             $this->scheme = $uri->getScheme();
             $this->userInfo = $uri->getUserInfo();
@@ -49,8 +48,9 @@ class Uri implements UriInterface
             $this->path = $uri->getPath();
             $this->query = $uri->getQuery();
             $this->fragment = $uri->getFragment();
-            $this->pathParts = UriNormalizer::splitPath($this->path);
         }
+
+        $this->pathParts = UriNormalizer::splitPath($this->path);
     }
 
     #[\Override]
