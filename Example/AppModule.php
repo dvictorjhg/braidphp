@@ -3,14 +3,16 @@
 namespace dvictorjhg\braidphp\Example;
 
 use dvictorjhg\braidphp\Core\Attributes\Module;
-use dvictorjhg\braidphp\Router\Router;
+use dvictorjhg\braidphp\Example\Modules\GreeterModule;
+use dvictorjhg\braidphp\Example\Modules\HealthModule;
+use dvictorjhg\braidphp\Router\HttpModule;
 
 #[Module(
-    providers: [
-        Router::class,
-        GreeterProvider::class
+    imports: [
+        HttpModule::class,
+        GreeterModule::class,
+        HealthModule::class,
     ],
-    controllers: [GreeterComponent::class]
 )]
 class AppModule
 {

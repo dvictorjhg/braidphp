@@ -1,6 +1,6 @@
 <?php
 
-namespace dvictorjhg\braidphp\Example;
+namespace dvictorjhg\braidphp\Example\Providers;
 
 class GreeterProvider
 {

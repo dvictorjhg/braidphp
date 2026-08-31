@@ -116,7 +116,6 @@ try {
 
             if ($Environment -eq 'development') {
                 $runArgs += @(
-                    '-v', "$(Join-Path $repoRoot 'public'):${appPath}/public",
                     '-v', "$(Join-Path $repoRoot 'src'):${appPath}/src",
                     '-v', "$(Join-Path $repoRoot 'Example'):${appPath}/Example",
                     '-v', "$(Join-Path $repoRoot 'tests'):${appPath}/tests"

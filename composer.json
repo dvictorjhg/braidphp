@@ -37,13 +37,13 @@
     },
     "autoload": {
         "psr-4": {
-            "dvictorjhg\\braidphp\\": "src/"
+            "dvictorjhg\\braidphp\\": "src/",
+            "dvictorjhg\\braidphp\\Example\\": "Example/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "dvictorjhg\\braidphp\\tests\\": "tests/",
-            "dvictorjhg\\braidphp\\Example\\": "Example/"
+            "dvictorjhg\\braidphp\\tests\\": "tests/"
         }
     },
     "archive": {

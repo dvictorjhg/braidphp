@@ -153,7 +153,6 @@ case "$action" in
 
         if [ "$environment" = "development" ]; then
             set -- "$@" \
-                -v "$repo_root/public:$app_path/public" \
                 -v "$repo_root/src:$app_path/src" \
                 -v "$repo_root/Example:$app_path/Example" \
                 -v "$repo_root/tests:$app_path/tests"

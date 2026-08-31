@@ -1,12 +1,13 @@
 <?php
 
-namespace dvictorjhg\braidphp\Example;
+namespace dvictorjhg\braidphp\Example\Controllers;
 
 use dvictorjhg\braidphp\Router\Attributes\Get;
 use dvictorjhg\braidphp\Router\Attributes\Route;
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
 use dvictorjhg\braidphp\Router\Http\Request;
 use dvictorjhg\braidphp\Router\Http\Response;
+use dvictorjhg\braidphp\Example\Providers\GreeterProvider;
 
 #[Route(
     path: '/api'

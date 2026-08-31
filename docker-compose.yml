@@ -16,7 +16,6 @@ services:
             - ${SERVER_PORT}:${SERVER_PORT}
         restart: unless-stopped
         volumes:
-            - ./public:${APP_PATH}/public
             - ./src:${APP_PATH}/src
             - ./Example:${APP_PATH}/Example
             - ./tests:${APP_PATH}/tests

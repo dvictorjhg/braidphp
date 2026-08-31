@@ -53,7 +53,8 @@ RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini" \
     && docker-php-ext-enable xdebug \
     ## Change default shell to zsh for www-data user and add sudo permissions
     && chsh -s /bin/zsh www-data \
-    && echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+    && echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && chown www-data:www-data /var/www
 
 ## Run everything after as non-privileged user
 USER www-data
@@ -68,13 +69,12 @@ RUN sh -c "$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools
 WORKDIR ${APP_PATH}
 
 ## Copy project files and dependencies
-COPY --chown=www-data public/ ./public/
 COPY --chown=www-data src/ ./src/
 COPY --chown=www-data Example/ ./Example/
 COPY --chown=www-data tests/ ./tests/
 COPY --from=dependencies --chown=www-data ${APP_PATH} ./
 
-CMD ["php", "public/index.php"]
+CMD ["php", "Example/index.php"]
 ENTRYPOINT [ "php.dev.docker-entrypoint.sh" ]
 
 # production
@@ -90,9 +90,8 @@ USER www-data
 
 WORKDIR ${APP_PATH}
 
-COPY --chown=www-data public/ ./public/
 COPY --chown=www-data src/ ./src/
 COPY --chown=www-data Example/ ./Example/
 COPY --from=dependencies --chown=www-data ${APP_PATH} ./
 
-CMD ["php", "public/index.php"]
+CMD ["php", "Example/index.php"]

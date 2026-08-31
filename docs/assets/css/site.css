@@ -600,9 +600,18 @@ code {
 }
 
 .install-block pre {
+    overflow-x: visible;
     padding: 14px;
     border: 1px solid var(--line);
     background: var(--paper);
+    font-size: 12px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.install-block pre code {
+    font-size: 11px;
 }
 
 .lifecycle-item h3,
@@ -633,6 +642,12 @@ code {
 }
 
 .module-ledger {
+    position: sticky;
+    top: 145px;
+    align-self: start;
+    display: grid;
+    align-content: start;
+    row-gap: 24px;
     border-top: 1px solid var(--line-strong);
 }
 
@@ -640,6 +655,7 @@ code {
     display: grid;
     grid-template-columns: 42px 1fr;
     gap: 15px;
+    align-content: center;
     padding: 19px 0;
     border-bottom: 1px solid var(--line);
 }
@@ -1323,8 +1339,13 @@ code {
     }
 
     .module-ledger {
+        position: static;
+        align-self: auto;
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: none;
+        align-content: normal;
+        row-gap: 0;
         column-gap: 26px;
     }
 
@@ -1401,7 +1422,8 @@ code {
         min-height: auto;
     }
 
-    .command-panel pre {
+    .command-panel pre,
+    .install-block pre {
         overflow-x: visible;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
@@ -1409,6 +1431,7 @@ code {
 
     .module-ledger {
         display: block;
+        grid-template-rows: none;
     }
 
     .module-flow,

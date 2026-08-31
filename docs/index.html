@@ -141,14 +141,16 @@ Hello Ada!</code></pre>
                     <article class="install-block accent-block">
                         <div class="block-label" data-i18n="start.runTitle">02 / Run</div>
                         <p data-i18n="start.runText">Start the listener on port 8000 and keep this terminal open.</p>
-                        <pre><code>php public/index.php</code></pre>
+                        <pre><code>php Example/index.php</code></pre>
                     </article>
                     <article class="install-block try-block">
                         <div class="block-label" data-i18n="start.tryTitle">03 / Try</div>
-                        <p data-i18n="start.tryText">In a second terminal, call the hello route and check its response.</p>
+                        <p data-i18n="start.tryText">In a second terminal, call routes from both feature modules.</p>
                         <pre><code>curl http://127.0.0.1:8000/api/hello/Ada
+# Hello Ada!
 
-# Hello Ada!</code></pre>
+curl http://127.0.0.1:8000/health/status
+# ok</code></pre>
                     </article>
                 </div>
             </div>
@@ -159,14 +161,14 @@ Hello Ada!</code></pre>
                 <div class="section-heading">
                     <div>
                         <span class="section-number" data-i18n="modules.number">02 / Modules</span>
-                        <h2 data-i18n="modules.title">Compose the application in four moves.</h2>
+                        <h2 data-i18n="modules.title">Compose the application from a module graph.</h2>
                     </div>
-                    <p data-i18n="modules.lede">A module is the boundary where imported infrastructure, injectable providers, route controllers, and startup work become one graph.</p>
+                    <p data-i18n="modules.lede">A root module loads infrastructure and feature modules; a feature module can import another module for its controllers.</p>
                 </div>
                 <div class="module-layout">
                     <div class="code-panel module-code">
                         <div class="panel-topline">
-                            <span class="quickstart-label">AppModule.php</span>
+                            <span class="quickstart-label">Example module graph</span>
                             <span class="code-badge">PHP</span>
                         </div>
                         <pre><code>&lt;?php
@@ -175,12 +177,36 @@ use dvictorjhg\braidphp\Core\Attributes\Module;
 use dvictorjhg\braidphp\Router\HttpModule;
 
 #[Module(
-    imports: [HttpModule::class],
-    providers: [Greeter::class],
-    controllers: [GreetingController::class],
-    bootstrap: [CacheWarmup::class =&gt; ['prefix' =&gt; 'app']]
+    imports: [
+        HttpModule::class,
+        GreeterModule::class,
+        HealthModule::class,
+    ],
 )]
 final class AppModule
+{
+}
+
+#[Module(
+    imports: [GreeterProviderModule::class],
+    controllers: [GreeterComponent::class],
+)]
+final class GreeterModule
+{
+}
+
+#[Module(
+    providers: [GreeterProvider::class],
+)]
+final class GreeterProviderModule
+{
+}
+
+#[Module(
+    providers: [HealthProvider::class],
+    controllers: [HealthComponent::class],
+)]
+final class HealthModule
 {
 }</code></pre>
                     </div>
@@ -204,19 +230,19 @@ final class AppModule
                     </div>
                 </div>
                 <div class="module-flow" aria-label="Module bootstrap order" data-i18n-aria-label="modules.flowAria">
-                    <div class="flow-node"><span>01</span><strong data-i18n="modules.flowImport">Import</strong><small>HttpModule</small></div>
+                    <div class="flow-node"><span>01</span><strong data-i18n="modules.flowRoot">Root</strong><small>AppModule</small></div>
                     <span class="flow-arrow" aria-hidden="true">-&gt;</span>
-                    <div class="flow-node"><span>02</span><strong data-i18n="modules.flowInject">Inject</strong><small>providers</small></div>
+                    <div class="flow-node"><span>02</span><strong data-i18n="modules.flowInfrastructure">Infrastructure</strong><small>HttpModule</small></div>
                     <span class="flow-arrow" aria-hidden="true">-&gt;</span>
-                    <div class="flow-node"><span>03</span><strong data-i18n="modules.flowScan">Scan</strong><small>controllers</small></div>
+                    <div class="flow-node"><span>03</span><strong data-i18n="modules.flowGreeter">Feature</strong><small>GreeterModule</small></div>
                     <span class="flow-arrow" aria-hidden="true">-&gt;</span>
-                    <div class="flow-node"><span>04</span><strong data-i18n="modules.flowStart">Start</strong><small>bootstrap</small></div>
+                    <div class="flow-node"><span>04</span><strong data-i18n="modules.flowHealth">Feature</strong><small>HealthModule</small></div>
                 </div>
                 <div class="callout">
                     <span class="callout-mark" aria-hidden="true">!</span>
                     <div>
-                        <strong data-i18n="modules.noteTitle">The router is a provider</strong>
-                        <p data-i18n="modules.noteText">Import HttpModule or register Router::class yourself before controllers are processed. The module scanner does not invent an application graph.</p>
+                        <strong data-i18n="modules.noteTitle">Infrastructure first</strong>
+                        <p data-i18n="modules.noteText">AppModule imports HttpModule before the feature modules, and GreeterModule imports GreeterProviderModule for GreeterComponent.</p>
                     </div>
                 </div>
             </div>

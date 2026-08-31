@@ -30,8 +30,8 @@
             "type": "php",
             "request": "launch",
             "runtimeArgs": ["-S", "localhost:8000", "-t", "."],
-            "cwd": "${workspaceFolder}/public",
-            "program": "${cwd}/index.php",
+            "cwd": "${workspaceFolder}/Example",
+            "program": "${workspaceFolder}/Example/index.php",
             "port": 9003,
             "serverReadyAction": {
                 "action": "openExternally"

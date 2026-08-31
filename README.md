@@ -106,7 +106,7 @@ The controller is discovered from attributes, `Greeter` is resolved by the
 injector, and the `:name` path segment is available on the immutable request
 copy passed to the action.
 
-The front controller in [public/index.php](public/index.php) reads
+The front controller in [Example/index.php](Example/index.php) reads
 `SERVER_ADDRESS` and `SERVER_PORT` from the environment.
 
 ## Run and Try the Example
@@ -116,11 +116,11 @@ example:
 
 ```bash
 composer install
-php public/index.php
+php Example/index.php
 ```
 
 Leave the server running, open a second terminal, and try the routes exposed by
-`Example/GreeterComponent.php`:
+the example modules:
 
 ```bash
 curl http://127.0.0.1:8000/api/hello/Ada
@@ -131,6 +131,9 @@ curl 'http://127.0.0.1:8000/api/hello?name=Ada'
 
 curl -X POST http://127.0.0.1:8000/api/hi/Ada
 # Hi Ada!
+
+curl http://127.0.0.1:8000/health/status
+# ok
 ```
 
 Stop the server with `Ctrl+C` when you are finished.
@@ -147,26 +150,54 @@ optional and accepts an array or a `PHPInjector\Container\Container`:
 | `controllers` | Scan classes or objects for route attributes. |
 | `bootstrap` | Resolve keyed classes after providers and controllers are ready. Existing objects are kept as-is. |
 
-Import the built-in HTTP module when it is useful to keep router registration
-separate from application providers:
+The checked-in [Example](Example) uses one root module to load the HTTP module
+and two feature modules. `GreeterModule` imports `GreeterProviderModule`, so its
+controller consumes a provider registered by another module:
 
 ```php
 use dvictorjhg\braidphp\Core\Attributes\Module;
 use dvictorjhg\braidphp\Router\HttpModule;
 
 #[Module(
-        imports: [HttpModule::class],
-        providers: [Greeter::class],
-        controllers: [GreetingController::class],
-        bootstrap: [CacheWarmup::class => ['prefix' => 'app']]
+    imports: [
+        HttpModule::class,
+        GreeterModule::class,
+        HealthModule::class,
+    ],
 )]
 final class AppModule
 {
 }
+
+#[Module(
+    imports: [GreeterProviderModule::class],
+    controllers: [GreeterComponent::class],
+)]
+final class GreeterModule
+{
+}
+
+#[Module(
+    providers: [GreeterProvider::class],
+)]
+final class GreeterProviderModule
+{
+}
+
+#[Module(
+    providers: [HealthProvider::class],
+    controllers: [HealthComponent::class],
+)]
+final class HealthModule
+{
+}
 ```
 
-`HttpModule` provides `Router::class`. Provider values and classes use the
-same resolution rules as the standalone
+`App::bootstrapModule()` loads each imported module before processing the
+importing module's own entries. `HttpModule` provides `Router::class`, and
+`GreeterProviderModule` provides `GreeterProvider` to `GreeterComponent` through
+`GreeterModule`. The feature modules contribute their route controllers.
+Provider values and classes use the same resolution rules as the standalone
 [`php-injector`](https://github.com/dvictorjhg/php-injector) package.
 
 ### One route, two valid declarations
@@ -303,9 +334,13 @@ server error message.
 bin/       Container launchers
 docs/      Static documentation
 docker/    PHP container definitions
-public/    Application entry point
+Example/   Example application
+    index.php       Application entry point
+    AppModule.php   Root module
+    Modules/        Module composition
+    Controllers/    Route components
+    Providers/      Injectable services
 src/       Framework source
-Example/   Example application code
 tests/     Unit and integration tests
 ```
 
