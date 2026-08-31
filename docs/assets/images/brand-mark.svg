@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 40 40" role="img" aria-labelledby="title">
+  <title id="title">BraidPHP logo</title>
+  <path d="M8 6c0 8 24 8 24 16s-24 8-24 16" fill="none" stroke="#006b68" stroke-linecap="round" stroke-width="3.5" />
+  <path d="M20 6c0 8-12 8-12 16s12 8 12 16" fill="none" stroke="#d85d45" stroke-linecap="round" stroke-width="3.5" />
+  <path d="M32 6c0 8-12 8-12 16s12 8 12 16" fill="none" stroke="#e9b949" stroke-linecap="round" stroke-width="3.5" />
+</svg>

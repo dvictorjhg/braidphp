@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title description">
+  <title id="title">BraidPHP</title>
+  <desc id="description">BraidPHP, an attribute-driven PHP framework</desc>
+  <rect width="1200" height="360" rx="24" fill="#fbfaf6" />
+  <rect width="16" height="360" fill="#006b68" />
+  <g transform="translate(92 78) scale(5.1)">
+    <path d="M8 6c0 8 24 8 24 16s-24 8-24 16" fill="none" stroke="#006b68" stroke-linecap="round" stroke-width="3.5" />
+    <path d="M20 6c0 8-12 8-12 16s12 8 12 16" fill="none" stroke="#d85d45" stroke-linecap="round" stroke-width="3.5" />
+    <path d="M32 6c0 8-12 8-12 16s12 8 12 16" fill="none" stroke="#e9b949" stroke-linecap="round" stroke-width="3.5" />
+  </g>
+  <text x="350" y="166" fill="#16353b" font-family="Trebuchet MS, sans-serif" font-size="78" font-weight="700">Braid<tspan fill="#d85d45">PHP</tspan></text>
+  <text x="354" y="220" fill="#006b68" font-family="Trebuchet MS, sans-serif" font-size="28" font-weight="700">Attribute-driven PHP framework</text>
+  <text x="354" y="266" fill="#4a5c60" font-family="Trebuchet MS, sans-serif" font-size="22">Routing | PSR-7 messages | Lightweight TCP runtime</text>
+</svg>

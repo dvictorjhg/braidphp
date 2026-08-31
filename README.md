@@ -1,5 +1,7 @@
 # BraidPHP
 
+![BraidPHP](docs/assets/images/brand-header.svg)
+
 [![Latest Version on Packagist][badge-packagist-version]][packagist]
 [![Monthly Downloads on Packagist][badge-packagist-downloads]][packagist]
 [![Total Downloads on Packagist][badge-packagist-total-downloads]][packagist]
@@ -32,7 +34,7 @@ and [security policy](SECURITY.md) complete the release documentation.
 
 ## Requirements
 
-- PHP 8.4 or 8.5
+- PHP 8.4+
 - Composer
 
 ## Installation
