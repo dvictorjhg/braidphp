@@ -955,6 +955,10 @@ code {
     margin-top: 0;
 }
 
+.route-alternatives .callout p {
+    color: var(--muted);
+}
+
 .custom-match pre {
     margin: 0;
 }
