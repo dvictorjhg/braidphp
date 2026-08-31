@@ -946,6 +946,15 @@ code {
     font-size: 14px;
 }
 
+.alternative-code {
+    display: grid;
+    gap: 12px;
+}
+
+.route-alternatives .callout {
+    margin-top: 0;
+}
+
 .custom-match pre {
     margin: 0;
 }

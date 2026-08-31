@@ -288,6 +288,36 @@ final class GreetingController
                         <span><b>PATCH</b><code>#[Patch]</code></span>
                     </div>
                 </div>
+                <div class="custom-match route-alternatives">
+                    <div>
+                        <span class="small-label" data-i18n="routing.alternativesLabel">Equivalent declarations</span>
+                        <h3 data-i18n="routing.alternativesTitle">One GET route, two valid forms.</h3>
+                        <p data-i18n-html="routing.alternativesText">The <code>#[Get]</code> shortcut and generic <code>#[Route]</code> attribute resolve to the same path and response. Choose one declaration for a route.</p>
+                    </div>
+                    <div class="alternative-code">
+                        <pre><code>#[Get('/hello/:name', pathMatch: 'full')]
+public function hello(Request $request): string
+{
+    return 'Hello ' . ($request-&gt;getRouteParam('name') ?? '') . '!';
+}</code></pre>
+                        <pre><code>#[Route(
+    httpMethod: HttpMethod::GET,
+    path: '/hello/:name',
+    pathMatch: 'full',
+)]
+public function hello(Request $request): string
+{
+    return 'Hello ' . ($request-&gt;getRouteParam('name') ?? '') . '!';
+}</code></pre>
+                        <div class="callout">
+                            <span class="callout-mark" aria-hidden="true">!</span>
+                            <div>
+                                <strong data-i18n="routing.alternativesDontTitle">Do not stack both attributes</strong>
+                                <p data-i18n="routing.alternativesDontText">Using both for one method creates duplicate route entries. It is redundant and makes route precedence harder to reason about.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="custom-match">
                     <div>
                         <span class="small-label" data-i18n="routing.customLabel">Programmatic matcher</span>

@@ -167,6 +167,75 @@ final class AppModule
 same resolution rules as the standalone
 [`php-injector`](https://github.com/dvictorjhg/php-injector) package.
 
+### One route, two valid declarations
+
+The `#[Get]` shortcut and the generic `#[Route]` attribute below produce the
+same `GET /api/hello/Ada` response. Choose one declaration style for a route.
+
+**Shortcut attribute:**
+
+```php
+use dvictorjhg\braidphp\Router\Attributes\Get;
+use dvictorjhg\braidphp\Router\Attributes\Route;
+use dvictorjhg\braidphp\Router\Http\Request;
+
+#[Route(path: '/api')]
+final class GreetingController
+{
+    #[Get('/hello/:name', pathMatch: 'full')]
+    public function hello(Request $request): string
+    {
+        return 'Hello ' . ($request->getRouteParam('name') ?? '') . '!';
+    }
+}
+```
+
+**Generic attribute:**
+
+```php
+use dvictorjhg\braidphp\Router\Attributes\Route;
+use dvictorjhg\braidphp\Router\Http\HttpMethod;
+use dvictorjhg\braidphp\Router\Http\Request;
+
+#[Route(path: '/api')]
+final class GreetingController
+{
+    #[Route(
+        httpMethod: HttpMethod::GET,
+        path: '/hello/:name',
+        pathMatch: 'full',
+    )]
+    public function hello(Request $request): string
+    {
+        return 'Hello ' . ($request->getRouteParam('name') ?? '') . '!';
+    }
+}
+```
+
+Both forms return:
+
+```text
+GET /api/hello/Ada
+Hello Ada!
+```
+
+Do not stack both attributes on the same method. That describes the same
+method and path twice, so the scanner creates duplicate route entries and
+makes route precedence harder to reason about:
+
+```php
+#[Get('/hello/:name', pathMatch: 'full')]
+#[Route(
+    httpMethod: HttpMethod::GET,
+    path: '/hello/:name',
+    pathMatch: 'full',
+)]
+public function hello(Request $request): string
+{
+    return 'Hello ' . ($request->getRouteParam('name') ?? '') . '!';
+}
+```
+
 ## Routing
 
 Routes are declared with `#[Route]` or one of the method-specific attributes:
