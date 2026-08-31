@@ -391,7 +391,7 @@ open a public issue for a security vulnerability.
 
 For a release, update [CHANGELOG.md](CHANGELOG.md), validate the package with
 `composer validate --strict`, `composer analyse`, `composer test`, and the
-coverage checks, then create and push an annotated Git tag such as `1.0.1`.
+coverage checks, then create and push an annotated Git tag such as `1.0.2`.
 
 After the tag is on GitHub, publish a GitHub Release and refresh the package on
 Packagist. Verify that users can install the package with
