@@ -25,6 +25,8 @@
     --ink-panel-text: #f3f0e8;
     --ink-panel-muted: #a9bdb6;
     --shadow: 0 18px 48px rgba(23, 39, 40, 0.08);
+    --site-header-height: 0px;
+    --section-anchor-offset: 128px;
     --mono: "Space Mono", "Courier New", monospace;
     --sans: "DM Sans", "Trebuchet MS", sans-serif;
 }
@@ -64,6 +66,11 @@
 
 html {
     scroll-behavior: smooth;
+    scroll-padding-top: var(--site-header-height);
+}
+
+section[id] {
+    scroll-margin-top: calc(-1 * var(--section-anchor-offset));
 }
 
 body {
@@ -144,6 +151,7 @@ a {
 .brand {
     display: inline-flex;
     align-items: center;
+    flex: 0 0 auto;
     gap: 10px;
     color: var(--ink);
     text-decoration: none;
@@ -177,15 +185,24 @@ a {
 
 .brand-copy {
     display: inline-flex;
-    align-items: baseline;
+    align-items: center;
+    flex: 0 0 118px;
     gap: 8px;
+    height: 20px;
+    width: 118px;
+    white-space: nowrap;
 }
 
 .brand-name {
+    display: inline-block;
+    flex: 0 0 76px;
     font-family: var(--sans);
     font-size: 18px;
     font-weight: 700;
-    line-height: 1;
+    height: 18px;
+    line-height: 18px;
+    width: 76px;
+    white-space: nowrap;
 }
 
 .brand-accent {
@@ -200,6 +217,14 @@ a {
     font-family: var(--mono);
     font-size: 11px;
     font-weight: 700;
+}
+
+.version {
+    display: inline-block;
+    flex: 0 0 34px;
+    height: 17px;
+    line-height: 17px;
+    width: 34px;
 }
 
 .nav-tools {
@@ -253,6 +278,11 @@ a {
     gap: 4px;
     padding-top: 14px;
     overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.nav-links::-webkit-scrollbar {
+    display: none;
 }
 
 .nav-links a {
@@ -262,11 +292,18 @@ a {
     color: var(--muted);
     font-size: 13px;
     text-decoration: none;
+    white-space: nowrap;
 }
 
 .nav-links a:hover,
 .nav-links a:focus-visible {
     border-color: var(--coral);
+    color: var(--ink);
+}
+
+.nav-links a[aria-current="location"] {
+    border-color: var(--teal);
+    background-color: var(--pale-strong);
     color: var(--ink);
 }
 
@@ -1355,6 +1392,10 @@ code {
 }
 
 @media (max-width: 700px) {
+    :root {
+        --section-anchor-offset: 92px;
+    }
+
     .wrap {
         width: min(100% - 30px, 1180px);
     }
@@ -1375,8 +1416,8 @@ code {
 
     .nav-links {
         padding-top: 11px;
-        flex-wrap: wrap;
-        overflow-x: visible;
+        flex-wrap: nowrap;
+        overflow-x: auto;
     }
 
     .nav-links a {

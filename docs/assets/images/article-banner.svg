@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="627" viewBox="0 0 1200 627" role="img" aria-labelledby="title desc">
+  <title id="title">PHPInjector and BraidPHP</title>
+  <desc id="desc">PHPInjector dependency injection and BraidPHP HTTP framework, two open source PHP projects.</desc>
+  <defs>
+    <clipPath id="left-card-clip">
+      <rect x="88" y="244" width="475" height="255" rx="22"/>
+    </clipPath>
+    <clipPath id="right-card-clip">
+      <rect x="637" y="244" width="475" height="255" rx="22"/>
+    </clipPath>
+  </defs>
+  <rect width="1200" height="627" fill="#f5f8f6"/>
+  <rect width="18" height="627" fill="#e46550"/>
+  <path d="M1012 0h188v188" fill="#0a716c"/>
+  <path d="M1200 0L1012 188" fill="none" stroke="#efc85b" stroke-width="8" opacity=".9"/>
+  <path d="M1042 0L1200 158" fill="none" stroke="#e46550" stroke-width="8" opacity=".55"/>
+
+  <g font-family="Aptos, Segoe UI, Arial, sans-serif">
+    <text x="88" y="78" fill="#0a716c" font-size="16" font-weight="700" letter-spacing="3">PHP OPEN SOURCE</text>
+    <text x="88" y="151" fill="#173d42" font-size="62" font-weight="700" letter-spacing="0">PHPInjector + BraidPHP</text>
+    <text x="91" y="193" fill="#4e676b" font-size="25" font-weight="500">Arquitectura PHP moderna, de la composicion al runtime HTTP</text>
+
+    <rect x="88" y="244" width="475" height="255" rx="22" fill="#ffffff" stroke="#dbe8e4" stroke-width="2"/>
+    <rect x="637" y="244" width="475" height="255" rx="22" fill="#ffffff" stroke="#dbe8e4" stroke-width="2"/>
+
+    <rect x="88" y="244" width="475" height="8" fill="#e46550" clip-path="url(#left-card-clip)"/>
+    <rect x="637" y="244" width="475" height="8" fill="#0a716c" clip-path="url(#right-card-clip)"/>
+
+    <text x="124" y="293" fill="#e46550" font-size="15" font-weight="700" letter-spacing="2">01 / DEPENDENCY INJECTION</text>
+    <text x="673" y="293" fill="#0a716c" font-size="15" font-weight="700" letter-spacing="2">02 / HTTP FRAMEWORK</text>
+
+    <g transform="translate(123 326) scale(2.55)">
+      <path d="M4 20h18" fill="none" stroke="#e46550" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+      <path d="M16 14l6 6-6 6" fill="none" stroke="#e46550" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+      <path d="M28 8v24" fill="none" stroke="#0a716c" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+      <path d="M28 12h8" fill="none" stroke="#4d72d6" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+      <path d="M28 28h8" fill="none" stroke="#efc85b" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+      <circle cx="36" cy="12" r="2" fill="#4d72d6"/>
+      <circle cx="36" cy="28" r="2" fill="#efc85b"/>
+    </g>
+    <text x="250" y="366" fill="#173d42" font-size="30" font-weight="700">PHP<tspan fill="#e46550">Injector</tspan></text>
+    <text x="250" y="402" fill="#4e676b" font-size="18" font-weight="500">Reflection + PSR-11 container</text>
+    <text x="250" y="431" fill="#4e676b" font-size="18" font-weight="500">Attributes + Singleton support</text>
+    <text x="124" y="468" fill="#173d42" font-size="16" font-weight="700">PHP 8.3+</text>
+
+    <g transform="translate(672 326) scale(2.55)">
+      <path d="M8 6c0 8 24 8 24 16s-24 8-24 16" fill="none" stroke="#006b68" stroke-linecap="round" stroke-width="3.5"/>
+      <path d="M20 6c0 8-12 8-12 16s12 8 12 16" fill="none" stroke="#d85d45" stroke-linecap="round" stroke-width="3.5"/>
+      <path d="M32 6c0 8-12 8-12 16s12 8 12 16" fill="none" stroke="#e9b949" stroke-linecap="round" stroke-width="3.5"/>
+    </g>
+    <text x="799" y="366" fill="#173d42" font-size="30" font-weight="700">Braid<tspan fill="#d85d45">PHP</tspan></text>
+    <text x="799" y="402" fill="#4e676b" font-size="18" font-weight="500">Attribute-driven routing</text>
+    <text x="799" y="431" fill="#4e676b" font-size="18" font-weight="500">Lightweight TCP runtime</text>
+    <text x="673" y="468" fill="#173d42" font-size="16" font-weight="700">PHP 8.4+</text>
+
+    <path d="M574 372h48" fill="none" stroke="#efc85b" stroke-width="5" stroke-linecap="round"/>
+    <path d="M612 360l14 12-14 12" fill="none" stroke="#efc85b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="600" y="347" fill="#8a9b98" font-size="11" font-weight="700" letter-spacing="1" text-anchor="middle">BUILDS ON</text>
+
+    <path d="M88 548h1024" fill="none" stroke="#c9dcd7" stroke-width="2"/>
+    <text x="88" y="584" fill="#0a716c" font-size="16" font-weight="700" letter-spacing="2">TWO PROJECTS / ONE PHP DIRECTION</text>
+    <text x="1112" y="584" fill="#4e676b" font-size="16" font-weight="600" text-anchor="end">Open source</text>
+  </g>
+</svg>
