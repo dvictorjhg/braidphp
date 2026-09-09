@@ -79,45 +79,31 @@
                 </div>
                 <div class="quickstart code-panel">
                     <div class="panel-topline">
-                        <span class="quickstart-label" data-i18n="hero.quickstartLabel">A useful first file</span>
+                        <span class="quickstart-label" data-i18n="hero.quickstartLabel">Example/Controllers/GreeterComponent.php</span>
                         <span class="panel-dots" aria-hidden="true"><i></i><i></i><i></i></span>
                     </div>
                     <pre><code>&lt;?php
 
-declare(strict_types=1);
-
-use dvictorjhg\braidphp\Core\App;
-use dvictorjhg\braidphp\Core\Attributes\Module;
 use dvictorjhg\braidphp\Router\Attributes\Get;
 use dvictorjhg\braidphp\Router\Attributes\Route;
 use dvictorjhg\braidphp\Router\Http\Request;
-use dvictorjhg\braidphp\Router\HttpModule;
-use dvictorjhg\braidphp\Router\Router;
 
 #[Route(path: '/api')]
-final class GreetingController
+final class GreeterComponent
 {
-    #[Get('/hello/:name')]
-    public function hello(Request $request): string
+    #[Get('/hello/:name', pathMatch: 'full')]
+    public function greet(Request $request): string
     {
-        return 'Hello ' . ($request-&gt;getRouteParam('name') ?? '') . '!';
+        $name = $request-&gt;getRouteParam('name') ?? '';
+        return 'Hello ' . $name . '!';
     }
 }
 
-#[Module(
-    imports: [HttpModule::class],
-    controllers: [GreetingController::class]
-)]
-final class AppModule {}
-
-$app = new App();
-$app-&gt;bootstrapModule(new AppModule());
-$app-&gt;listen(port: '8000');</code></pre>
+// /api + /hello/:name = /api/hello/Ada</code></pre>
                     <div class="example-output">
-                        <span class="example-output-label" data-i18n="example.expectedOutput">Request</span>
+                        <span class="example-output-label" data-i18n="example.tryLabel">Try it</span>
                         <pre><code>curl http://127.0.0.1:8000/api/hello/Ada
-
-Hello Ada!</code></pre>
+# Hello Ada!</code></pre>
                     </div>
                 </div>
             </div>
@@ -168,7 +154,7 @@ curl http://127.0.0.1:8000/health/status
                 <div class="module-layout">
                     <div class="code-panel module-code">
                         <div class="panel-topline">
-                            <span class="quickstart-label">Example module graph</span>
+                            <span class="quickstart-label" data-i18n="modules.exampleLabel">Module graph / condensed</span>
                             <span class="code-badge">PHP</span>
                         </div>
                         <pre><code>&lt;?php
@@ -260,27 +246,31 @@ final class HealthModule
                 <div class="routing-grid">
                     <div class="code-panel routing-code">
                         <div class="panel-topline">
-                            <span class="quickstart-label">GreetingController.php</span>
+                            <span class="quickstart-label" data-i18n="routing.exampleLabel">Example/Controllers/GreeterComponent.php</span>
                             <span class="code-badge">ROUTES</span>
                         </div>
-                        <pre><code>#[Route(path: '/api')]
-final class GreetingController
-{
-    public function __construct(private Greeter $greeter)
-    {
-    }
+                        <pre><code>use dvictorjhg\braidphp\Router\Attributes\Get;
+use dvictorjhg\braidphp\Router\Attributes\Route;
+use dvictorjhg\braidphp\Router\Http\Request;
+use dvictorjhg\braidphp\Router\Http\Response;
 
+#[Route(path: '/api')]
+final class GreeterComponent
+{
     #[Get('/hello/:name', pathMatch: 'full')]
     public function greet(Request $request): string
     {
         $name = $request-&gt;getRouteParam('name') ?? '';
-        return $this-&gt;greeter-&gt;greeting($name);
+        return 'Hello ' . $name . '!';
     }
 
-    #[Post('/hello')]
-    public function create(Request $request): Response
+    #[Get('/hello')]
+    public function greetQueryParam(Request $request): Response
     {
-        return new Response(201, body: (string) $request-&gt;getBody());
+        $name = $request-&gt;getQueryParams()['name'] ?? null;
+        return \is_string($name) &amp;&amp; $name !== ''
+            ? new Response(body: 'Hello ' . $name . '!')
+            : new Response(400);
     }
 }</code></pre>
                     </div>
@@ -295,8 +285,8 @@ final class GreetingController
                         </div>
                         <div class="route-result"><span class="result-dot"></span><span data-i18n="routing.result">RouteMatch -> request copy -> action</span></div>
                         <div class="route-details">
-                            <div><strong data-i18n="routing.queryTitle">Query</strong><code>/search?term=php</code><p data-i18n="routing.queryText">Read from getQueryParams().</p></div>
-                            <div><strong data-i18n="routing.matchTitle">Path match</strong><code>prefix / full</code><p data-i18n="routing.matchText">Use full when a node must consume the remaining path.</p></div>
+                            <div><strong data-i18n="routing.queryTitle">Query</strong><code>/api/hello?name=Ada</code><p data-i18n="routing.queryText">Read name from getQueryParams().</p></div>
+                            <div><strong data-i18n="routing.matchTitle">Path match</strong><code>prefix -&gt; full</code><p data-i18n="routing.matchText">Use full when a node must consume the remaining path.</p></div>
                         </div>
                     </div>
                 </div>
@@ -361,7 +351,7 @@ $router-&gt;setRoutes(new Route(
             ? new UrlMatcherResult(['health'])
             : null;
     },
-    action: [HealthController::class, 'show'],
+    action: [HealthComponent::class, 'status'],
 ));</code></pre>
                 </div>
             </div>
@@ -380,34 +370,39 @@ $router-&gt;setRoutes(new Route(
                     <article class="http-card">
                         <div class="card-kicker">REQUEST</div>
                         <h3 data-i18n="http.requestTitle">Headers and route data</h3>
-                        <p data-i18n="http.requestText">Query parameters are parsed on construction; route parameters arrive through withRouteParams().</p>
+                        <p data-i18n="http.requestText">Query parameters are parsed on construction; route and header changes return copies.</p>
                         <pre><code>$request = new Request(
     method: HttpMethod::GET,
     uri: '/health?verbose=1',
 );
 
-$traced = $request
+$routed = $request-&gt;withRouteParams(['scope' =&gt; 'live']);
+$traced = $routed
     -&gt;withHeader('X-Trace', 'one')
-    -&gt;withAddedHeader('X-Trace', 'two')
-    -&gt;withRouteParams(['scope' =&gt; 'live']);
+    -&gt;withAddedHeader('X-Trace', 'two');
 
-echo $traced-&gt;getQueryParams()['verbose'];</code></pre>
-                        <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code>1</code></div>
+echo 'verbose=' . $routed-&gt;getQueryParams()['verbose'] . PHP_EOL;
+echo 'scope=' . $routed-&gt;getRouteParam('scope') . PHP_EOL;
+echo 'X-Trace=' . \implode(', ', $traced-&gt;getHeader('X-Trace'));</code></pre>
+                        <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code>verbose=1
+scope=live
+X-Trace=one, two</code></div>
                     </article>
                     <article class="http-card response-card">
                         <div class="card-kicker">RESPONSE</div>
                         <h3 data-i18n="http.responseTitle">Bodies become streams</h3>
-                        <p data-i18n="http.responseText">Pass scalar content or a PSR stream. A reason phrase is inferred when the status code is known.</p>
+                        <p data-i18n="http.responseText">A scalar body becomes a PSR stream, and the status code supplies its reason phrase.</p>
                         <pre><code>$response = new Response(
     statusCode: 201,
-    headers: ['X-Request' =&gt; 'one'],
-    body: 'created',
+    body: 'welcome',
 );
 
-echo $response-&gt;getReasonPhrase();
-echo (string) $response;</code></pre>
-                        <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code>Created
-Content-Length: 7</code></div>
+echo 'status=' . $response-&gt;getStatusCode() . PHP_EOL;
+echo 'reason=' . $response-&gt;getReasonPhrase() . PHP_EOL;
+echo 'body=' . (string) $response-&gt;getBody();</code></pre>
+                        <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code>status=201
+reason=Created
+body=welcome</code></div>
                     </article>
                 </div>
                 <div class="api-table-wrap">
