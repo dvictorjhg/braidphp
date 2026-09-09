@@ -420,7 +420,7 @@ body=welcome</code></div>
                         </tbody>
                     </table>
                 </div>
-                <div class="note-line"><strong data-i18n="http.noteTitle">Serialization detail</strong><span data-i18n="http.noteText">Content-Type defaults to text/plain and Content-Length is calculated only when the response is converted to a string and those headers are absent.</span></div>
+                <div class="note-line"><strong data-i18n="http.noteTitle">Serialization detail</strong><span data-i18n="http.noteText">When the response is converted to a string, the serialized output adds Content-Type: text/plain if no Content-Type was provided. It also calculates Content-Length from the body bytes if no Content-Length was provided; explicit header values are preserved.</span></div>
             </div>
         </section>
 
