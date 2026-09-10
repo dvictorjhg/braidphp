@@ -5,6 +5,13 @@ All notable changes to `BraidPHP` will be documented in this file.
 Updates should follow the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 principles and Semantic Versioning.
 
+## [Unreleased]
+
+### Changed
+
+- Reworked the README and GitHub Pages documentation to match the current module, routing, HTTP, runtime, container, and development behavior.
+- Added a step-by-step first-application walkthrough and clarified tested/runtime platform expectations, coverage gates, and single-process limitations.
+
 ## [1.0.2] - 2026-08-31
 
 ### Changed
