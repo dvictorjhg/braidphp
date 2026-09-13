@@ -414,10 +414,8 @@ final class HealthModule
                         <h3 data-i18n="modules.appProvidersTitle">Seed providers before the first module.</h3>
                         <p data-i18n="modules.appProvidersText">App accepts an optional array or Container in its constructor. Use it when infrastructure should exist before bootstrapModule() runs.</p>
                         <pre><code>use dvictorjhg\braidphp\Core\App;
-use dvictorjhg\braidphp\Router\Router;
 
 $app = new App([
-    Router::class => new Router(),
     'env' => 'development',
 ]);</code></pre>
                     </article>
@@ -429,7 +427,7 @@ $app = new App([
     imports: [HttpModule::class],
     bootstrap: [
         BootstrapService::class => [],
-        'existing' => $existingObject,
+        ExistingService::class =&gt; new ExistingService(),
     ],
 )]
 final class StartupModule
@@ -647,9 +645,9 @@ $routed = $request
     -&gt;withHeader('X-Trace', 'one')
     -&gt;withAddedHeader('X-Trace', 'two');
 
-echo $request-&gt;getRouteParam('scope') ?? 'none';
-echo $routed-&gt;getHeaderLine('x-trace');
-echo $routed-&gt;getHeaderLine('host');</code></pre>
+echo ($request-&gt;getRouteParam('scope') ?? 'none') . "\n";
+echo $routed-&gt;getHeaderLine('x-trace') . "\n";
+echo $routed-&gt;getHeaderLine('host') . "\n";</code></pre>
                         <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code>none
 one,two
 example.test:8080</code></div>
@@ -757,7 +755,7 @@ HTTP/1.1 201 Created ...</code></div>
                     <article class="doc-card">
                         <span class="small-label">04</span>
                         <h3 data-i18n="runtime.stage4Title">Result conversion and failures</h3>
-                        <p data-i18n="runtime.stage4Text">A Response is returned unchanged. Null, scalars, resources, existing PSR streams, and stringable objects become Response(200, [], body). Unsupported results raise AppException, and the socket loop converts uncaught throwables into a 500 response body starting with “Server Error:”.</p>
+                        <p data-i18n="runtime.stage4Text">A Response is returned unchanged. Null, scalars, resources, existing PSR streams, and stringable objects become Response(200, [], body). Arrays raise AppException, while objects that are neither stringable nor streams raise InvalidArgumentException during body conversion. The socket loop converts uncaught throwables into a 500 response body starting with “Server Error:”.</p>
                     </article>
                 </div>
                 <div class="runtime-grid">
@@ -800,7 +798,7 @@ HTTP/1.1 201 Created ...</code></div>
                     <article class="doc-card step-card">
                         <span class="small-label" data-i18n="operations.composeLabel">Docker / Compose</span>
                         <h3 data-i18n="operations.composeTitle">Use the checked-in image definition.</h3>
-                        <p data-i18n="operations.composeText">docker-compose.yml builds docker/php/php.Dockerfile, passes APP_PATH and ENVIRONMENT, exposes SERVER_PORT, and mounts src/, Example/, tests/, coverage/, and debug/ in development mode.</p>
+                        <p data-i18n="operations.composeText">docker-compose.yml builds docker/php/php.Dockerfile, passes APP_PATH and ENVIRONMENT, exposes SERVER_PORT, and mounts src/, Example/, tests/, coverage/, and debug/.</p>
                         <pre><code>docker compose up --build php</code></pre>
                     </article>
                     <article class="doc-card step-card">
