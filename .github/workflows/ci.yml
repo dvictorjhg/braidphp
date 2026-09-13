@@ -7,12 +7,10 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   test:
-    # Add this:
-    environment: manual-ci-approval
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -58,7 +56,7 @@ jobs:
           disable_search: true
           fail_ci_if_error: true
           plugins: noop
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
 
       - name: Enforce minimum coverage
         run: composer coverage:check

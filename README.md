@@ -52,6 +52,8 @@ Create one module, one provider, one controller, then start the TCP server:
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/vendor/autoload.php';
+
 use dvictorjhg\braidphp\Core\App;
 use dvictorjhg\braidphp\Core\Attributes\Module;
 use dvictorjhg\braidphp\Router\Attributes\Get;
@@ -193,7 +195,7 @@ podman exec braidphp-development composer test
 ```
 
 The default `.env` values expose `SERVER_PORT=8000` and build the PHP image tag
-`php-8.5.9-cli-trixie`.
+`php-8.5.10-cli-trixie`.
 
 ## Changelog
 

@@ -1,5 +1,5 @@
 # base
-FROM docker.io/library/php:8.5.9-cli-alpine3.24 AS base
+FROM docker.io/library/php:8.5.10-cli-alpine3.24 AS base
 
 COPY docker/php/opcache.ini $PHP_INI_DIR/conf.d/opcache.ini
 
