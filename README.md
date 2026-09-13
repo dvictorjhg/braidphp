@@ -34,7 +34,7 @@ Dependency injection and provider storage are delegated to the standalone
 
 ## Requirements
 
-- PHP 8.4+
+- PHP ^8.4
 - Composer
 
 ## Installation
