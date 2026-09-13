@@ -62,7 +62,7 @@ if (-not $Environment) {
 }
 
 $serverPort = Get-Setting -Settings $settings -Name 'SERVER_PORT' -Default '8000'
-$imageTag = Get-Setting -Settings $settings -Name 'DOCKER_IMAGE_TAG' -Default 'php-8.5.9-cli-trixie'
+$imageTag = Get-Setting -Settings $settings -Name 'DOCKER_IMAGE_TAG' -Default 'php-8.5.10-cli-trixie'
 $appPath = Get-Setting -Settings $settings -Name 'APP_PATH' -Default '/app'
 $imageName = "localhost/dvictorjhg/braidphp:$imageTag-$Environment"
 $containerName = "braidphp-$Environment"
@@ -110,15 +110,15 @@ try {
                 '-e', "ENVIRONMENT=$Environment",
                 '-e', 'SERVER_ADDRESS=0.0.0.0',
                 '-e', "SERVER_PORT=$serverPort",
-                '-v', "${debugDir}:/tmp/xdebug",
-                '-v', "${coverageDir}:${appPath}/coverage"
+                '-v', "${debugDir}:/tmp/xdebug:Z",
+                '-v', "${coverageDir}:${appPath}/coverage:Z"
             )
 
             if ($Environment -eq 'development') {
                 $runArgs += @(
-                    '-v', "$(Join-Path $repoRoot 'src'):${appPath}/src",
-                    '-v', "$(Join-Path $repoRoot 'Example'):${appPath}/Example",
-                    '-v', "$(Join-Path $repoRoot 'tests'):${appPath}/tests"
+                    '-v', "$(Join-Path $repoRoot 'src'):${appPath}/src:Z",
+                    '-v', "$(Join-Path $repoRoot 'Example'):${appPath}/Example:Z",
+                    '-v', "$(Join-Path $repoRoot 'tests'):${appPath}/tests:Z"
                 )
             }
 

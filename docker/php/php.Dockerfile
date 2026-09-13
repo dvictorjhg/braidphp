@@ -1,5 +1,5 @@
 # base
-FROM docker.io/library/php:8.5.9-cli-trixie AS base
+FROM docker.io/library/php:8.5.10-cli-trixie AS base
 ARG ENVIRONMENT
 ENV ENVIRONMENT=${ENVIRONMENT}
 ARG APP_PATH
@@ -72,6 +72,9 @@ WORKDIR ${APP_PATH}
 COPY --chown=www-data src/ ./src/
 COPY --chown=www-data Example/ ./Example/
 COPY --chown=www-data tests/ ./tests/
+COPY --chown=www-data phpunit.xml phpstan.neon phpcs.xml ./
+COPY --chown=www-data tools/ ./tools/
+COPY --from=dependencies /usr/local/bin/composer /usr/local/bin/composer
 COPY --from=dependencies --chown=www-data ${APP_PATH} ./
 
 CMD ["php", "Example/index.php"]

@@ -243,6 +243,28 @@ class RouterTest extends TestCase
         )));
     }
 
+    public function testUsesFirstMatchingRouteInDeclarationOrder(): void
+    {
+        $router = new Router();
+        $router->setRoutes([
+            new Route(
+                httpMethod: HttpMethod::GET,
+                path: '/test',
+                action: [self::class, 'firstMatch']
+            ),
+            new Route(
+                httpMethod: HttpMethod::GET,
+                path: '/test',
+                action: [self::class, 'secondMatch']
+            )
+        ]);
+
+        $match = $router->processRoutes(new Request(method: HttpMethod::GET, uri: '/test'));
+
+        self::assertInstanceOf(RouteMatch::class, $match);
+        self::assertSame([self::class, 'firstMatch'], $match->route->action);
+    }
+
     public function testUsesCustomMatcherResult(): void
     {
         $router = new Router();
@@ -275,5 +297,15 @@ class RouterTest extends TestCase
         $this->expectExceptionMessage('Route matcher must return UrlMatcherResult.');
 
         $router->processRoutes(new Request(method: HttpMethod::GET, uri: '/victor'));
+    }
+
+    public static function firstMatch(): string
+    {
+        return 'first';
+    }
+
+    public static function secondMatch(): string
+    {
+        return 'second';
     }
 }

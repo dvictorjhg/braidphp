@@ -107,7 +107,7 @@ if [ -z "$environment" ]; then
 fi
 
 server_port=$(get_setting "SERVER_PORT" "8000")
-image_tag=$(get_setting "DOCKER_IMAGE_TAG" "php-8.5.9-cli-trixie")
+image_tag=$(get_setting "DOCKER_IMAGE_TAG" "php-8.5.10-cli-trixie")
 app_path=$(get_setting "APP_PATH" "/app")
 image_name="localhost/dvictorjhg/braidphp:${image_tag}-${environment}"
 container_name="braidphp-${environment}"
@@ -148,14 +148,14 @@ case "$action" in
         set -- "$@" -e "ENVIRONMENT=$environment"
         set -- "$@" -e "SERVER_ADDRESS=0.0.0.0"
         set -- "$@" -e "SERVER_PORT=$server_port"
-        set -- "$@" -v "$debug_dir:/tmp/xdebug"
-        set -- "$@" -v "$coverage_dir:$app_path/coverage"
+        set -- "$@" -v "$debug_dir:/tmp/xdebug:Z"
+        set -- "$@" -v "$coverage_dir:$app_path/coverage:Z"
 
         if [ "$environment" = "development" ]; then
             set -- "$@" \
-                -v "$repo_root/src:$app_path/src" \
-                -v "$repo_root/Example:$app_path/Example" \
-                -v "$repo_root/tests:$app_path/tests"
+                -v "$repo_root/src:$app_path/src:Z" \
+                -v "$repo_root/Example:$app_path/Example:Z" \
+                -v "$repo_root/tests:$app_path/tests:Z"
         fi
 
         if [ "$detach" -eq 1 ]; then
