@@ -51,7 +51,7 @@
     <text x="799" y="366" fill="#173d42" font-size="30" font-weight="700">Braid<tspan fill="#d85d45">PHP</tspan></text>
     <text x="799" y="402" fill="#4e676b" font-size="18" font-weight="500">Attribute-driven routing</text>
     <text x="799" y="431" fill="#4e676b" font-size="18" font-weight="500">Lightweight TCP runtime</text>
-    <text x="673" y="468" fill="#173d42" font-size="16" font-weight="700">PHP 8.4+</text>
+    <text x="673" y="468" fill="#173d42" font-size="16" font-weight="700">PHP ^8.4</text>
 
     <path d="M574 372h48" fill="none" stroke="#efc85b" stroke-width="5" stroke-linecap="round"/>
     <path d="M612 360l14 12-14 12" fill="none" stroke="#efc85b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
