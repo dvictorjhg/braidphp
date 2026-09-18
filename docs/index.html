@@ -782,7 +782,11 @@ echo $response-&gt;getReasonPhrase() . PHP_EOL;
 echo (string) $response;</code></pre>
                         <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code>201
 Created
-HTTP/1.1 201 Created ...</code></div>
+HTTP/1.1 201 Created
+Content-Type: text/plain
+Content-Length: 7
+
+welcome</code></div>
                     </article>
                 </div>
                 <div class="api-table-wrap">
