@@ -194,8 +194,10 @@ podman exec braidphp-development composer test
 ./bin/podman-run.sh --action down
 ```
 
-The default `.env` values expose `SERVER_PORT=8000` and build the PHP image tag
-`php-8.5.10-cli-trixie`.
+The default `.env` values expose `SERVER_PORT=8000` and set the base PHP image
+tag to `php-8.5.10-cli-trixie`. The Podman launcher appends the environment
+name, so its default development image is
+`localhost/dvictorjhg/braidphp:php-8.5.10-cli-trixie-development`.
 
 ## Changelog
 
