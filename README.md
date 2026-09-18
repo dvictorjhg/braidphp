@@ -26,11 +26,11 @@ Dependency injection and provider storage are delegated to the standalone
 
 - **Full guide:** [GitHub Pages documentation](https://dvictorjhg.github.io/braidphp/)
 - **Local static entry point:** [`docs/index.html`](docs/index.html)
-- **First application walkthrough:** [`docs/index.html#first-app`](docs/index.html#first-app)
-- **Modules and dependency injection:** [`docs/index.html#modules`](docs/index.html#modules)
-- **Routing reference:** [`docs/index.html#routing`](docs/index.html#routing)
-- **HTTP messages and runtime:** [`docs/index.html#http`](docs/index.html#http), [`docs/index.html#runtime`](docs/index.html#runtime), [`docs/index.html#operations`](docs/index.html#operations)
-- **Development and release workflow:** [`docs/index.html#development`](docs/index.html#development)
+- **First application walkthrough:** [GitHub Pages first-app guide](https://dvictorjhg.github.io/braidphp/#first-app)
+- **Modules and dependency injection:** [GitHub Pages modules guide](https://dvictorjhg.github.io/braidphp/#modules)
+- **Routing reference:** [GitHub Pages routing guide](https://dvictorjhg.github.io/braidphp/#routing)
+- **HTTP messages and runtime:** [GitHub Pages HTTP guide](https://dvictorjhg.github.io/braidphp/#http), [runtime guide](https://dvictorjhg.github.io/braidphp/#runtime), [operations guide](https://dvictorjhg.github.io/braidphp/#operations)
+- **Development and release workflow:** [GitHub Pages development guide](https://dvictorjhg.github.io/braidphp/#development)
 
 ## Requirements
 
@@ -105,7 +105,7 @@ Hello Ada!
 ```
 
 For the full empty-directory walkthrough, including `composer.json`, `src/`, and
-`index.php`, see [`docs/index.html#first-app`](docs/index.html#first-app).
+`index.php`, see the [GitHub Pages first-app guide](https://dvictorjhg.github.io/braidphp/#first-app).
 
 ## What The Package Includes
 
