@@ -85,6 +85,8 @@
                     </div>
                     <pre><code>&lt;?php
 
+namespace dvictorjhg\braidphp\Example\Controllers;
+
 use dvictorjhg\braidphp\Router\Attributes\Get;
 use dvictorjhg\braidphp\Router\Attributes\Route;
 use dvictorjhg\braidphp\Router\Http\Request;
@@ -206,7 +208,7 @@ final class GreeterComponent
                     <article class="doc-card step-card">
                         <span class="small-label">01</span>
                         <h3 data-i18n="first.step1Title">Create the project and install BraidPHP.</h3>
-                        <p data-i18n="first.step1Text">Start with a composer.json that declares PHP 8.4, requires the package, and maps the App namespace to src/.</p>
+                        <p data-i18n="first.step1Text">Start with a composer.json that declares PHP ^8.4, requires the package, and maps the App namespace to src/.</p>
                         <pre><code>{
     "name": "acme/hello-braid",
     "require": {
@@ -311,15 +313,17 @@ $address = (string) getenv('SERVER_ADDRESS') ?: '0.0.0.0';
 $port = (string) getenv('SERVER_PORT') ?: '8000';
 
 $app-&gt;listen(address: $address, port: $port);</code></pre>
-                        <div class="example-output compact"><span data-i18n="first.commandLabel">Run</span><code>php index.php
-curl http://127.0.0.1:8000/api/hello/Ada</code></div>
+                        <div class="example-output compact">
+                            <span data-i18n="first.serverCommandLabel">Terminal 1</span><code>php index.php</code>
+                            <span data-i18n="first.requestCommandLabel">Terminal 2</span><code>curl http://127.0.0.1:8000/api/hello/Ada</code>
+                        </div>
                     </article>
                 </div>
                 <div class="callout">
                     <span class="callout-mark" aria-hidden="true">!</span>
                     <div>
                         <strong data-i18n="first.noteTitle">What should happen</strong>
-                        <p data-i18n="first.noteText">The server prints "Server listening on 0.0.0.0:8000..." and the curl request returns "Hello Ada!". If you keep the server in one terminal, every extra request is handled on the same process in sequence.</p>
+                        <p data-i18n="first.noteText">Run the server in one terminal and the curl request in a second terminal. The server prints "Server listening on 0.0.0.0:8000..." and the request returns "Hello Ada!". Every extra request is handled by the same process in sequence.</p>
                     </div>
                 </div>
             </div>
@@ -340,9 +344,16 @@ curl http://127.0.0.1:8000/api/hello/Ada</code></div>
                             <span class="quickstart-label" data-i18n="modules.exampleLabel">Example/AppModule.php and Example/Modules/*</span>
                             <span class="code-badge">PHP</span>
                         </div>
-                        <pre><code>&lt;?php
+                        <pre><code>// Example/AppModule.php
+&lt;?php
+
+declare(strict_types=1);
+
+namespace dvictorjhg\braidphp\Example;
 
 use dvictorjhg\braidphp\Core\Attributes\Module;
+use dvictorjhg\braidphp\Example\Modules\GreeterModule;
+use dvictorjhg\braidphp\Example\Modules\HealthModule;
 use dvictorjhg\braidphp\Router\HttpModule;
 
 #[Module(
@@ -352,30 +363,62 @@ use dvictorjhg\braidphp\Router\HttpModule;
         HealthModule::class,
     ],
 )]
-final class AppModule
+class AppModule
 {
 }
+
+// Example/Modules/GreeterModule.php
+&lt;?php
+
+declare(strict_types=1);
+
+namespace dvictorjhg\braidphp\Example\Modules;
+
+use dvictorjhg\braidphp\Core\Attributes\Module;
+use dvictorjhg\braidphp\Example\Controllers\GreeterComponent;
+use dvictorjhg\braidphp\Example\Modules\GreeterProviderModule;
 
 #[Module(
     imports: [GreeterProviderModule::class],
     controllers: [GreeterComponent::class],
 )]
-final class GreeterModule
+class GreeterModule
 {
 }
+
+// Example/Modules/GreeterProviderModule.php
+&lt;?php
+
+declare(strict_types=1);
+
+namespace dvictorjhg\braidphp\Example\Modules;
+
+use dvictorjhg\braidphp\Core\Attributes\Module;
+use dvictorjhg\braidphp\Example\Providers\GreeterProvider;
 
 #[Module(
     providers: [GreeterProvider::class],
 )]
-final class GreeterProviderModule
+class GreeterProviderModule
 {
 }
+
+// Example/Modules/HealthModule.php
+&lt;?php
+
+declare(strict_types=1);
+
+namespace dvictorjhg\braidphp\Example\Modules;
+
+use dvictorjhg\braidphp\Core\Attributes\Module;
+use dvictorjhg\braidphp\Example\Controllers\HealthComponent;
+use dvictorjhg\braidphp\Example\Providers\HealthProvider;
 
 #[Module(
     providers: [HealthProvider::class],
     controllers: [HealthComponent::class],
 )]
-final class HealthModule
+class HealthModule
 {
 }</code></pre>
                     </div>
@@ -413,17 +456,41 @@ final class HealthModule
                         <span class="small-label" data-i18n="modules.appProvidersLabel">App constructor providers</span>
                         <h3 data-i18n="modules.appProvidersTitle">Seed providers before the first module.</h3>
                         <p data-i18n="modules.appProvidersText">App accepts an optional array or Container in its constructor. Use it when infrastructure should exist before bootstrapModule() runs.</p>
-                        <pre><code>use dvictorjhg\braidphp\Core\App;
+                        <pre><code>&lt;?php
+
+declare(strict_types=1);
+
+use dvictorjhg\braidphp\Core\App;
+
+require_once __DIR__ . '/vendor/autoload.php';
 
 $app = new App([
-    'env' => 'development',
+    'env' =&gt; 'development',
 ]);</code></pre>
                     </article>
                     <article class="doc-card step-card">
                         <span class="small-label" data-i18n="modules.bootstrapExampleLabel">bootstrap example</span>
                         <h3 data-i18n="modules.bootstrapExampleTitle">Resolve startup services after routes exist.</h3>
                         <p data-i18n="modules.bootstrapExampleText">Bootstrap entries are keyed by class name. Arrays become constructor arguments for that class, while prebuilt objects are left untouched.</p>
-                        <pre><code>#[Module(
+                        <pre><code>&lt;?php
+
+declare(strict_types=1);
+
+use dvictorjhg\braidphp\Core\App;
+use dvictorjhg\braidphp\Core\Attributes\Module;
+use dvictorjhg\braidphp\Router\HttpModule;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+final class BootstrapService
+{
+}
+
+final class ExistingService
+{
+}
+
+#[Module(
     imports: [HttpModule::class],
     bootstrap: [
         BootstrapService::class => [],
@@ -432,7 +499,10 @@ $app = new App([
 )]
 final class StartupModule
 {
-}</code></pre>
+}
+
+$app = new App();
+$app-&gt;bootstrapModule(new StartupModule());</code></pre>
                     </article>
                 </div>
                 <div class="api-table-wrap">
@@ -491,7 +561,11 @@ final class StartupModule
                             <span class="quickstart-label" data-i18n="routing.exampleLabel">Example/Controllers/GreeterComponent.php</span>
                             <span class="code-badge">ROUTES</span>
                         </div>
-                        <pre><code>use dvictorjhg\braidphp\Router\Attributes\Get;
+                        <pre><code>&lt;?php
+
+namespace dvictorjhg\braidphp\Example\Controllers;
+
+use dvictorjhg\braidphp\Router\Attributes\Get;
 use dvictorjhg\braidphp\Router\Attributes\Route;
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
 use dvictorjhg\braidphp\Router\Http\Request;
@@ -603,9 +677,27 @@ public function hello(Request $request): string
                         <h3 data-i18n="routing.customTitle">Return UrlMatcherResult or return null.</h3>
                         <p data-i18n="routing.customText">Programmatic routes can use a custom matcher instead of a path string, but not both at once.</p>
                     </div>
-                    <pre><code>use dvictorjhg\braidphp\Router\Classes\Route;
+                    <pre><code>&lt;?php
+
+declare(strict_types=1);
+
+use dvictorjhg\braidphp\Router\Classes\Route;
 use dvictorjhg\braidphp\Router\Classes\UrlMatcherResult;
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
+use dvictorjhg\braidphp\Router\Http\Response;
+use dvictorjhg\braidphp\Router\Router;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+final class HealthComponent
+{
+    public function status(): Response
+    {
+        return new Response(body: 'ok');
+    }
+}
+
+$router = new Router();
 
 $router-&gt;setRoutes(new Route(
     httpMethod: HttpMethod::GET,
@@ -615,7 +707,14 @@ $router-&gt;setRoutes(new Route(
             : null;
     },
     action: [HealthComponent::class, 'status'],
-));</code></pre>
+));
+
+$matched = $router-&gt;processRoutes(new \dvictorjhg\braidphp\Router\Http\Request(
+    method: HttpMethod::GET,
+    uri: '/health',
+));
+
+echo $matched !== null ? 'matched' : 'not matched';</code></pre>
                 </div>
             </div>
         </section>
@@ -634,7 +733,16 @@ $router-&gt;setRoutes(new Route(
                         <div class="card-kicker">REQUEST</div>
                         <h3 data-i18n="http.requestTitle">Request</h3>
                         <p data-i18n="http.requestText">Request implements RequestInterface, parses query parameters on construction, injects a Host header from the URI when needed, and stores route parameters only on withRouteParams() copies.</p>
-                        <pre><code>$request = new Request(
+                        <pre><code>&lt;?php
+
+declare(strict_types=1);
+
+use dvictorjhg\braidphp\Router\Http\HttpMethod;
+use dvictorjhg\braidphp\Router\Http\Request;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+$request = new Request(
     method: HttpMethod::GET,
     uri: 'http://example.test:8080/hello?name=Ada',
     body: '',
@@ -656,7 +764,15 @@ example.test:8080</code></div>
                         <div class="card-kicker">RESPONSE</div>
                         <h3 data-i18n="http.responseTitle">Response</h3>
                         <p data-i18n="http.responseText">Response implements ResponseInterface, supplies known reason phrases automatically, and writes Content-Type plus Content-Length during string serialization when those headers were not supplied.</p>
-                        <pre><code>$response = new Response(
+                        <pre><code>&lt;?php
+
+declare(strict_types=1);
+
+use dvictorjhg\braidphp\Router\Http\Response;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+$response = new Response(
     statusCode: 201,
     body: 'welcome',
 );
@@ -701,7 +817,7 @@ HTTP/1.1 201 Created ...</code></div>
                             </tr>
                             <tr>
                                 <td><code>StreamFactory</code></td>
-                                <td data-i18n-html="http.factoryRow">Helper for creating PSR streams from scalars, resources, stringable objects, or existing streams.</td>
+                                <td data-i18n-html="http.factoryRow">Helper for creating PSR streams from scalars, native PHP stream resources, stringable objects, or existing streams.</td>
                                 <td data-i18n="http.factoryRowNote">This repository does not ship PSR-17 request or response factory interfaces.</td>
                             </tr>
                         </tbody>
@@ -755,13 +871,30 @@ HTTP/1.1 201 Created ...</code></div>
                     <article class="doc-card">
                         <span class="small-label">04</span>
                         <h3 data-i18n="runtime.stage4Title">Result conversion and failures</h3>
-                        <p data-i18n="runtime.stage4Text">A Response is returned unchanged. Null, scalars, resources, existing PSR streams, and stringable objects become Response(200, [], body). Arrays raise AppException, while objects that are neither stringable nor streams raise InvalidArgumentException during body conversion. The socket loop converts uncaught throwables into a 500 response body starting with “Server Error:”.</p>
+                        <p data-i18n="runtime.stage4Text">A Response is returned unchanged. Null, scalars, native PHP stream resources, existing PSR streams, and stringable objects become Response(200, [], body). Arrays raise AppException, while objects that are neither stringable nor streams raise InvalidArgumentException during body conversion. The socket loop converts uncaught throwables into a 500 response body starting with “Server Error:”.</p>
                     </article>
                 </div>
                 <div class="runtime-grid">
                     <div class="runtime-code code-panel">
                         <div class="panel-topline"><span class="quickstart-label" data-i18n="runtime.commandTitle">Listen with explicit address and port</span><span class="code-badge">BLOCKING</span></div>
-                        <pre><code>$app-&gt;listen(
+                        <pre><code>&lt;?php
+
+declare(strict_types=1);
+
+use dvictorjhg\braidphp\Core\App;
+use dvictorjhg\braidphp\Core\Attributes\Module;
+use dvictorjhg\braidphp\Router\HttpModule;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+#[Module(imports: [HttpModule::class])]
+final class RuntimeModule
+{
+}
+
+$app = new App();
+$app-&gt;bootstrapModule(new RuntimeModule());
+$app-&gt;listen(
     address: '0.0.0.0',
     port: '8000',
 );</code></pre>
@@ -814,7 +947,7 @@ podman exec braidphp-development composer test
                     <span class="callout-mark" aria-hidden="true">!</span>
                     <div>
                         <strong data-i18n="operations.noteTitle">Package install versus repository clone</strong>
-                        <p data-i18n="operations.noteText">composer.json excludes Example/ from packaged archives, so applications that require braidphp from Packagist get the framework source, not the sample app. The Example tree is still present in this repository and in the container images because the repository uses it as the runnable demo.</p>
+                        <p data-i18n="operations.noteText">composer.json excludes Example/ when Composer creates an archive. Repository and Packagist archive contents are controlled by their hosting and distribution settings. The Example tree remains in this repository and in the container images because it is the runnable demo.</p>
                     </div>
                 </div>
             </div>
