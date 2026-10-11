@@ -29,6 +29,7 @@ Dependency injection and provider storage are delegated to the standalone
 - **First application walkthrough:** [GitHub Pages first-app guide](https://dvictorjhg.github.io/braidphp/#first-app)
 - **Modules and dependency injection:** [GitHub Pages modules guide](https://dvictorjhg.github.io/braidphp/#modules)
 - **Routing reference:** [GitHub Pages routing guide](https://dvictorjhg.github.io/braidphp/#routing)
+- **Executable recipes:** [JSON API and request handling](https://dvictorjhg.github.io/braidphp/#recipes)
 - **HTTP messages and runtime:** [GitHub Pages HTTP guide](https://dvictorjhg.github.io/braidphp/#http), [runtime guide](https://dvictorjhg.github.io/braidphp/#runtime), [operations guide](https://dvictorjhg.github.io/braidphp/#operations)
 - **Development and release workflow:** [GitHub Pages development guide](https://dvictorjhg.github.io/braidphp/#development)
 
@@ -133,6 +134,51 @@ For the full empty-directory walkthrough, including `composer.json`, `src/`, and
   this repository.
 - Scale by running multiple processes behind a process manager, reverse proxy,
   or container platform.
+- The active PHPInjector is process-global, not request scoped. Do not cache
+  request-specific state in shared providers or bootstrap independent apps in
+  one process and expect separate containers.
+- `handleRequest()` propagates controller exceptions. Only `listen()` catches
+  them, and its 500 response exposes the exception message. Catch and sanitize
+  failures in application code before exposing the listener publicly.
+- Arrays are not converted to JSON automatically. Return a `Response` with an
+  explicit JSON content type and `json_encode(..., JSON_THROW_ON_ERROR)` body.
+
+## Test Requests Without A Server
+
+This complete example uses the checked-in application, so run it from a repository
+clone after `composer install`, not from a package-only installation:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/vendor/autoload.php';
+
+use dvictorjhg\braidphp\Core\App;
+use dvictorjhg\braidphp\Example\AppModule;
+use dvictorjhg\braidphp\Router\Http\HttpMethod;
+use dvictorjhg\braidphp\Router\Http\Request;
+
+$app = new App();
+$app->bootstrapModule(new AppModule());
+foreach (['/api/hello/Ada', '/health/status', '/missing'] as $uri) {
+    $response = $app->handleRequest(new Request(method: HttpMethod::GET, uri: $uri));
+    echo $response->getStatusCode() . ' ' . (string) $response->getBody() . PHP_EOL;
+}
+```
+
+Expected output:
+
+```text
+200 Hello Ada!
+200 ok
+404 Not Found
+```
+
+See the [complete JSON recipe](https://dvictorjhg.github.io/braidphp/#recipes)
+for decoded path parameters, query validation, dependency injection, strict path
+matching, and exception handling.
 
 ## Run The Example Application
 
@@ -162,6 +208,7 @@ curl http://127.0.0.1:8000/health/status
 ## Development Commands
 
 ```bash
+php tools/check-docs.php
 composer validate --strict
 composer check-platform-reqs
 composer analyse
@@ -177,6 +224,9 @@ composer coverage:check
   the generated Clover XML.
 - [`codecov.yml`](codecov.yml) separately configures Codecov project and patch
   targets at **50%**.
+- `php tools/check-docs.php` requires PHP DOM and `proc_open`. It executes marked
+  HTML examples and non-server README examples in separate PHP processes and
+  compares their expected output. Xdebug is disabled only for these child runs.
 
 ## Containers
 

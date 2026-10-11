@@ -70,7 +70,7 @@ html {
 }
 
 section[id] {
-    scroll-margin-top: calc(var(--site-header-height) + var(--section-anchor-offset));
+    scroll-margin-top: var(--section-anchor-offset);
 }
 
 body {
@@ -118,7 +118,7 @@ a {
 }
 
 .site-header {
-    position: sticky;
+    position: static;
     z-index: 20;
     top: 0;
     border-bottom: 1px solid var(--line);
@@ -277,12 +277,7 @@ a {
 .nav-links {
     gap: 4px;
     padding-top: 14px;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.nav-links::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
 }
 
 .nav-links a {
@@ -327,9 +322,8 @@ a {
     grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
     gap: 72px;
     align-items: center;
-    min-height: 690px;
-    padding-top: 74px;
-    padding-bottom: 74px;
+    padding-top: 40px;
+    padding-bottom: 40px;
 }
 
 .eyebrow,
@@ -364,7 +358,7 @@ a {
     max-width: 680px;
     margin: 0;
     color: var(--ink);
-    font-size: 4.5rem;
+    font-size: 3rem;
     font-weight: 700;
     letter-spacing: 0;
     line-height: 0.99;
@@ -453,6 +447,7 @@ a {
 
 .panel-topline {
     justify-content: space-between;
+    gap: 12px;
     min-height: 46px;
     padding: 0 18px;
     border-bottom: 1px solid var(--line);
@@ -460,11 +455,14 @@ a {
 }
 
 .quickstart-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
     color: var(--teal);
 }
 
 .panel-dots {
     display: inline-flex;
+    flex-shrink: 0;
     gap: 5px;
 }
 
@@ -1417,8 +1415,7 @@ code {
 
     .nav-links {
         padding-top: 11px;
-        flex-wrap: nowrap;
-        overflow-x: auto;
+        flex-wrap: wrap;
     }
 
     .nav-links a {
@@ -1432,12 +1429,12 @@ code {
     }
 
     .hero-grid {
-        padding-top: 55px;
-        padding-bottom: 55px;
+        padding-top: 32px;
+        padding-bottom: 32px;
     }
 
     .hero h1 {
-        font-size: 3.2rem;
+        font-size: 2.4rem;
     }
 
     .hero-lede {
@@ -1574,6 +1571,7 @@ code {
 .doc-grid {
     display: grid;
     gap: 18px;
+    align-items: start;
 }
 
 .doc-grid.two-up {
@@ -1610,17 +1608,32 @@ code {
     margin-top: 18px;
     padding: 18px;
     border: 1px solid var(--line);
-    background: var(--paper-deep);
-    font-size: 12px;
+    background: var(--surface);
+    font-size: 13px;
     line-height: 1.7;
 }
 
 .doc-card pre code {
     color: inherit;
+    font-size: inherit;
 }
 
 .step-card {
     border-top: 4px solid var(--teal);
+}
+
+#first-app .doc-grid {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+#first-app .step-card {
+    min-width: 0;
+    padding: 24px 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .checklist {
@@ -1663,5 +1676,86 @@ code {
         overflow-x: auto;
         overflow-wrap: normal;
         white-space: pre;
+    }
+}
+
+pre,
+.code-panel pre,
+.http-card pre,
+.custom-match pre,
+.doc-card pre,
+.install-block pre {
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+code,
+h1,
+h2,
+h3,
+p,
+li {
+    overflow-wrap: anywhere;
+}
+
+.section.ink .routing-code pre {
+    color: var(--ink-panel-text);
+}
+
+.brand-copy,
+.brand-name {
+    flex-basis: auto;
+    width: auto;
+    height: auto;
+}
+
+@media (max-width: 700px) {
+    .site-header {
+        position: static;
+    }
+
+    .api-table,
+    .api-reference {
+        min-width: 0;
+        table-layout: fixed;
+    }
+
+    .api-table th,
+    .api-table td,
+    .api-reference th,
+    .api-reference td {
+        padding: 12px 6px;
+        overflow-wrap: anywhere;
+    }
+}
+
+.skip-link {
+    position: fixed;
+    z-index: 30;
+    top: 8px;
+    left: 8px;
+    padding: 12px;
+    color: var(--ink);
+    background: var(--surface);
+    transform: translateY(-150%);
+}
+
+.skip-link:focus {
+    transform: none;
+}
+
+.skip-link:focus-visible,
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+pre:focus-visible {
+    outline: 3px solid var(--coral);
+    outline-offset: 3px;
+}
+
+@media (min-width: 701px) {
+    html[data-theme] .site-header {
+        position: sticky;
     }
 }

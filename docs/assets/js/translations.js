@@ -19,7 +19,7 @@ const translations = {
         "language.english": "EN",
         "language.spanish": "ES",
         "hero.eyebrow": "PHP ^8.4 / PSR-7 / TCP",
-        "hero.title": "Route the request. Keep the rest native.",
+        "hero.title": "BraidPHP",
         "hero.lede": "BraidPHP is an attribute-driven PHP framework for small HTTP applications that want module composition, explicit routing, and a visible request lifecycle.",
         "hero.start": "Build the first app",
         "hero.readme": "Open the README",
@@ -400,5 +400,37 @@ const translations = {
         "footer.github": "Repositorio en GitHub"
     }
 };
+
+Object.assign(translations.en, {
+    "nav.skip": "Skip to documentation",
+    "hero.title": "BraidPHP",
+    "nav.recipes": "Recipes",
+    "recipes.label": "Recipes / Executable examples",
+    "recipes.title": "A JSON API without opening a socket.",
+    "recipes.lede": "Run this complete example from the project root after composer install. It exercises module bootstrap, named configuration, constructor injection, decoded path parameters, query validation, and immutable requests.",
+    "recipes.resultsTitle": "Action results are not automatically JSON",
+    "recipes.results": `<ul class="checklist"><li>A framework Response is returned unchanged.</li><li>Null, scalars, native streams, PSR streams, and stringable objects become a 200 Response. Set your content type explicitly.</li><li>Arrays raise AppException; ordinary non-stringable objects fail stream conversion. Return json_encode() in a Response for JSON.</li><li>handleRequest() propagates action exceptions. Only listen() catches them and sends a 500 body containing the exception message.</li></ul>`,
+    "recipes.testsTitle": "Repeatable checks",
+    "recipes.testsText": "The documentation checker executes marked examples in isolated PHP processes and compares exact output. It needs PHP DOM and proc_open. The first-app files and live example routes can also be checked through handleRequest() without binding a port.",
+    "recipes.scopeText": "The injector is globally active, not request scoped. Avoid request data in cached services and avoid bootstrapping unrelated applications in the same process.",
+    "operations.safetyTitle": "Public listener limitations",
+    "operations.safetyText": "This is a minimal HTTP listener, not a hardened edge server. TLS, worker supervision, timeouts, request size limits, and rate limiting need an external boundary. Chunked request decoding and persistent connections are not provided. Return sanitized errors in application code: listener-generated 500 responses expose exception messages. Do not assume HEAD automatically suppresses a response body or an unmatched method returns 405."
+});
+
+Object.assign(translations.es, {
+    "nav.skip": "Saltar a la documentacion",
+    "hero.title": "BraidPHP",
+    "nav.recipes": "Recetas",
+    "recipes.label": "Recetas / Ejemplos ejecutables",
+    "recipes.title": "Una API JSON sin abrir un socket.",
+    "recipes.lede": "Ejecuta este ejemplo completo desde la raiz del proyecto despues de composer install. Comprueba modulos, configuracion con nombre, inyeccion por constructor, parametros de ruta decodificados, validacion de consulta y peticiones inmutables.",
+    "recipes.resultsTitle": "Los resultados no se convierten automaticamente a JSON",
+    "recipes.results": `<ul class="checklist"><li>Una Response del framework se devuelve sin cambios.</li><li>Null, escalares, streams nativos, streams PSR y objetos convertibles a texto se envuelven en una Response 200. Define explicitamente el tipo de contenido.</li><li>Los arrays lanzan AppException; los objetos no convertibles a texto fallan al convertir el cuerpo. Para JSON, devuelve json_encode() dentro de una Response.</li><li>handleRequest() propaga las excepciones de las acciones. Solo listen() las captura y envia un cuerpo 500 con el mensaje de la excepcion.</li></ul>`,
+    "recipes.testsTitle": "Comprobaciones repetibles",
+    "recipes.testsText": "La comprobacion ejecuta los ejemplos marcados en procesos PHP aislados y compara la salida exacta. Necesita PHP DOM y proc_open. Tambien puedes comprobar los archivos de la primera aplicacion y las rutas reales mediante handleRequest() sin abrir un puerto.",
+    "recipes.scopeText": "El inyector queda activo globalmente, no por peticion. Evita datos de peticion en servicios compartidos y no arranques aplicaciones independientes en el mismo proceso.",
+    "operations.safetyTitle": "Limites del listener publico",
+    "operations.safetyText": "Este listener HTTP es minimo; no es un servidor perimetral endurecido. TLS, supervision de procesos, tiempos de espera, limites de peticion y limitacion de trafico necesitan una capa externa. No hay decodificacion de peticiones chunked ni conexiones persistentes. Devuelve errores saneados en la aplicacion: los errores 500 del listener exponen mensajes de excepcion. No supongas que HEAD elimina automaticamente el cuerpo o que un metodo sin ruta devuelve 405."
+});
 
 export default translations;
