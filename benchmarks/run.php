@@ -328,7 +328,8 @@ $report .= "{$metadata['started_utc']}; $repeats repeats x $duration per cell, 1
 $report .= "$routeCount handler routes per framework; plain PHP is a no-framework control without a route table.\n\n";
 $report .= "Median throughput and median per-run percentiles; ranges are min-max throughput, not confidence intervals.\n\n";
 $report .= "Server CPU only (100% = one core), CPU microseconds per request, mean sampled RSS and maximum sampled RSS. RSS is sampled every approximately 100ms; short peaks may be missed. Resource windows include k6 launch/exit but exclude server startup and warmup.\n\n";
-$report .= "| Target | Workload | VUs | Median req/s | Min-max req/s | p95 ms | p99 ms | CPU % | CPU us/req | Mean RSS MiB | Max sampled RSS MiB | Errors/check failures |\n";
+$report .= "Lower resource cost is better for equivalent work and process history. CPU % alone is not a ranking: low utilization can also mean fewer requests are served. VUs describe the test, not a score.\n\n";
+$report .= "| Target | Workload | VUs | Median req/s (higher is better) | Min-max req/s (higher is better) | p95 ms (lower is better) | p99 ms (lower is better) | CPU % (context-dependent) | CPU us/req (lower is better) | Mean RSS MiB (lower is better) | Max sampled RSS MiB (lower is better) | Errors/check failures (lower is better) |\n";
 $report .= "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n";
 foreach ($targets as $target) {
     foreach ($concurrency as $vus) {

@@ -54,7 +54,7 @@ bootstrap per request behind PHP's single-process built-in server, so these
 measurements include route registration, not only dispatch. The plain-PHP control
 has no framework or route table and is not a 100-route peer.
 
-| Handler routes | Application | Plaintext req/s | JSON req/s | Parameter req/s | 404 req/s | JSON p95 ms |
+| Handler routes | Application | Plaintext req/s (higher is better) | JSON req/s (higher is better) | Parameter req/s (higher is better) | 404 req/s (higher is better) | JSON p95 ms (lower is better) |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
 | 3 | Plain PHP control | 25,346 | 24,127 | 24,423 | 26,539 | 1.065 |
 | 3 | BraidPHP | 12,054 | 12,137 | 10,274 | 11,386 | 1.938 |
@@ -76,7 +76,7 @@ BraidPHP bootstraps once per process using `App::listen()`. Its HTTP parser/emit
 and connection logging differ from the shared-server setup. This lifecycle
 advantage is not a routing-only speedup or a production deployment recommendation.
 
-| Handler routes | VUs | Plaintext req/s | JSON req/s | Parameter req/s | 404 req/s | JSON p95 ms |
+| Handler routes | VUs | Plaintext req/s (higher is better) | JSON req/s (higher is better) | Parameter req/s (higher is better) | 404 req/s (higher is better) | JSON p95 ms (lower is better) |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 3 | 16 | 25,515 | 22,340 | 25,766 | 22,669 | 1.207 |
 | 100 | 16 | 20,197 | 20,246 | 19,829 | 24,980 | 1.394 |
@@ -88,7 +88,10 @@ or the entire host. CPU 100% means one core. CPU us/request divides server CPU
 time by completed measured requests. CPU %, CPU us/request, and mean RSS are
 medians of per-run values; sampled peak RSS is the maximum across repeats.
 
-| Handler routes | Application | CPU % | CPU us/request | Mean RSS MiB | Max sampled RSS MiB |
+Lower resource cost is better for equivalent work and process history. CPU %
+alone is not a ranking: low utilization can also mean fewer requests are served.
+
+| Handler routes | Application | CPU % (context-dependent) | CPU us/request (lower is better) | Mean RSS MiB (lower is better) | Max sampled RSS MiB (lower is better) |
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 3 | Plain PHP control | 51.2 | 18.7 | 56.3 | 60.3 |
 | 3 | BraidPHP, shared server | 87.3 | 72.2 | 47.5 | 49.6 |
@@ -123,7 +126,7 @@ sample counts. [Measurement details](README.md#server-cpu-and-rss) define the un
 
 Median requests/second. All workloads have the same correctness checks.
 
-| Application | Plaintext | JSON | Parameter | 404 |
+| Application | Plaintext req/s (higher is better) | JSON req/s (higher is better) | Parameter req/s (higher is better) | 404 req/s (higher is better) |
 | --- | ---: | ---: | ---: | ---: |
 | Plain PHP control | 8,423 | 7,656 | 7,601 | 7,819 |
 | BraidPHP, shared server | 5,596 | 4,309 | 4,528 | 5,536 |
@@ -143,7 +146,7 @@ Xdebug off, five repeats of 2000 dispatches after warmup. The parameter case
 matches the last-declared route; setup and HTTP are excluded. No old before/after
 percentage is carried forward from deleted evidence.
 
-| Routes | Parameter us/dispatch | Missing us/dispatch |
+| Routes | Parameter us/dispatch (lower is better) | Missing us/dispatch (lower is better) |
 | ---: | ---: | ---: |
 | 3 | 0.939 | 0.508 |
 | 100 | 15.224 | 10.638 |

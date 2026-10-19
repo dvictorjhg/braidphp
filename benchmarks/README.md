@@ -127,6 +127,16 @@ BraidPHP still uses its normal controller resolution path.
 - Min/max throughput across repeats is a variability range, not a confidence
   interval. Five-second samples are exploratory, not publication-grade evidence.
 
+### Reading Results
+
+- **Higher is better:** throughput in requests/second, including expected 404 responses.
+- **Lower is better:** p95/p99 latency, dispatch time, CPU us/request, sampled RSS,
+  and request/check failures. Compare resource costs for equivalent work and
+  process history; RSS is not framework-only memory.
+- **CPU % is context-dependent:** lower is better only at equivalent throughput.
+  Low utilization can also mean less work is being completed.
+- Route counts, VUs, repeats, and request totals describe the test, not a score.
+
 ### Server CPU And RSS
 
 The runner reads Linux `/proc/<server-pid>/stat` and `/status`, not whole-host,
