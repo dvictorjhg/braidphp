@@ -25,6 +25,7 @@ abstract class Message implements MessageInterface
     ) {
         $this->headers = [];
         foreach ($headers as $name => $values) {
+            self::validateHeaderName($name);
             $this->headers[\strtolower($name)] = [
                 'name' => $name,
                 'values' => self::normalizeHeaderValues($values)
@@ -95,6 +96,7 @@ abstract class Message implements MessageInterface
     #[\Override]
     public function withHeader(string $name, mixed $value): MessageInterface
     {
+        self::validateHeaderName($name);
         $lowercaseName = \strtolower($name);
 
         $newInstance = clone $this;
@@ -111,6 +113,7 @@ abstract class Message implements MessageInterface
     #[\Override]
     public function withAddedHeader(string $name, mixed $value): MessageInterface
     {
+        self::validateHeaderName($name);
         $lowercaseName = \strtolower($name);
         $newInstance = clone $this;
 
@@ -170,9 +173,19 @@ abstract class Message implements MessageInterface
             if (!\is_string($value)) {
                 throw new \InvalidArgumentException('Header values must be strings.');
             }
+            if (\preg_match('/[^\x09\x20-\x7E\x80-\xFF]/', $value) === 1) {
+                throw new \InvalidArgumentException('Invalid header value.');
+            }
             $normalizedValues[] = $value;
         }
 
         return $normalizedValues;
+    }
+
+    private static function validateHeaderName(string $name): void
+    {
+        if (\preg_match('/^[!#$%&\'*+.^_`|~0-9A-Za-z-]+$/D', $name) !== 1) {
+            throw new \InvalidArgumentException('Invalid header name.');
+        }
     }
 }

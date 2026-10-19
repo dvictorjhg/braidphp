@@ -62,7 +62,7 @@ if (-not $Environment) {
 }
 
 $serverPort = Get-Setting -Settings $settings -Name 'SERVER_PORT' -Default '8000'
-$imageTag = Get-Setting -Settings $settings -Name 'DOCKER_IMAGE_TAG' -Default 'php-8.5.10-cli-trixie'
+$imageTag = Get-Setting -Settings $settings -Name 'DOCKER_IMAGE_TAG' -Default 'php-8.5.11-cli-trixie'
 $appPath = Get-Setting -Settings $settings -Name 'APP_PATH' -Default '/app'
 $imageName = "localhost/dvictorjhg/braidphp:$imageTag-$Environment"
 $containerName = "braidphp-$Environment"

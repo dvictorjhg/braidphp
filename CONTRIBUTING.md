@@ -51,6 +51,7 @@ composer test
 Use the pull request template and complete the relevant verification steps:
 
 ```text
+php tools/check-docs.php
 composer validate --strict
 composer check-platform-reqs
 composer analyse
@@ -62,6 +63,13 @@ composer coverage:check
 
 The CI workflow runs these checks on PHP 8.4 and 8.5. GitHub issue forms and a
 pull request template are included to keep reports and reviews consistent.
+
+Tool options can be passed through Composer, for example
+`composer test -- --filter AppTest` and
+`composer coverage:check -- build/test-results/clover.xml 90`.
+PHPUnit and PHPStan accept `--configuration`; PHP_CodeSniffer accepts `--standard`.
+Use `HttpOptions` in application code for runtime settings, not tool configuration
+or edits to vendor files. See the README configuration table and release checklist.
 
 ## Reporting Bugs
 

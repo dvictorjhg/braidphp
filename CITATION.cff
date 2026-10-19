@@ -10,4 +10,6 @@ authors:
 repository-code: https://github.com/dvictorjhg/braidphp
 url: https://github.com/dvictorjhg/braidphp
 license: Apache-2.0
+version: 1.1.0
+date-released: 2026-10-19
 abstract: Attribute-driven PHP framework with module composition, routing, PSR HTTP messages, and a lightweight TCP runtime.

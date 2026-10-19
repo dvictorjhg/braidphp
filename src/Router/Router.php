@@ -11,9 +11,13 @@ use dvictorjhg\braidphp\Router\Classes\UrlMatcherResult;
 
 class Router
 {
+    /** @var \WeakMap<Route, list<string>> */
+    private readonly \WeakMap $routePathParts;
+
     public function __construct(
         private RouteArray $routes = new RouteArray()
     ) {
+        $this->routePathParts = new \WeakMap();
     }
 
     public function getRoutes(): RouteArray
@@ -119,7 +123,7 @@ class Router
         } elseif ($route->matcher !== null) {
             $matcherResult = ($route->matcher)($pathParts, $route);
         } else {
-            $matcherResult = self::defaultUrlMatcher($pathParts, $route);
+            $matcherResult = $this->defaultUrlMatcher($pathParts, $route);
         }
 
         if ($matcherResult !== null && !($matcherResult instanceof UrlMatcherResult)) {
@@ -139,13 +143,17 @@ class Router
     /**
      * @param list<string> $pathParts
      */
-    private static function defaultUrlMatcher(array $pathParts, Route $route): ?UrlMatcherResult
+    private function defaultUrlMatcher(array $pathParts, Route $route): ?UrlMatcherResult
     {
-        $routePath = $route->path ?? '';
-        if (\str_starts_with($routePath, '/')) {
-            $routePath = \substr($routePath, 1);
+        $routePathParts = $this->routePathParts[$route] ?? null;
+        if ($routePathParts === null) {
+            $routePath = $route->path ?? '';
+            if (\str_starts_with($routePath, '/')) {
+                $routePath = \substr($routePath, 1);
+            }
+            $routePathParts = \explode('/', $routePath);
+            $this->routePathParts[$route] = $routePathParts;
         }
-        $routePathParts = \explode('/', $routePath);
         /** @var array<string, string> $parameters */
         $parameters = [];
 

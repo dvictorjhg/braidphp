@@ -8,6 +8,7 @@ use PHPInjector\Container\Container;
 use PHPInjector\DI\Injector;
 use dvictorjhg\braidphp\Core\Attributes\Module;
 use dvictorjhg\braidphp\Core\Scanners\ModuleScanner;
+use dvictorjhg\braidphp\Router\Http\HttpOptions;
 use dvictorjhg\braidphp\Router\Http\Request;
 use dvictorjhg\braidphp\Router\Http\Response;
 use dvictorjhg\braidphp\Router\Classes\RouteMatch;
@@ -23,8 +24,10 @@ class App
     /**
      * @param array<class-string|int|string, mixed>|Container<mixed> $providers
      */
-    public function __construct(array|Container $providers = [])
-    {
+    public function __construct(
+        array|Container $providers = [],
+        private readonly HttpOptions $httpOptions = new HttpOptions()
+    ) {
         if (!empty($providers)) {
             $this->injector = new Injector($providers);
         }
@@ -65,7 +68,7 @@ class App
     {
         $context = \stream_context_create([
             'socket' => [
-                'backlog' => 128
+                'backlog' => $this->httpOptions->backlog
             ]
         ]);
 
@@ -84,27 +87,41 @@ class App
 
         try {
             while (($client = @\stream_socket_accept($server, -1)) !== false) {
-                $response = null;
-
-                try {
-                    $request = Request::fromResource($client);
-                    if ($request === null) {
-                        continue;
-                    }
-
-                    $response = $this->handleRequest($request);
-                } catch (\Throwable $exception) {
-                    $response = new Response(500, [], 'Server Error: ' . $exception->getMessage());
-                } finally {
-                    if ($response instanceof Response) {
-                        $this->writeResponse($client, $response);
-                    }
-
-                    \fclose($client);
-                }
+                $this->serveClient($client);
             }
         } finally {
             \fclose($server);
+        }
+    }
+
+    /** @param resource $client */
+    private function serveClient(mixed $client): void
+    {
+        $response = null;
+        try {
+            try {
+                $request = Request::fromResource($client, $this->httpOptions);
+            } catch (\InvalidArgumentException $exception) {
+                \error_log('Request error: ' . $exception);
+                $response = new Response(400, [], 'Bad Request');
+                return;
+            }
+            if ($request !== null) {
+                $response = $this->handleRequest($request);
+            }
+        } catch (\Throwable $exception) {
+            \error_log('Application error: ' . $exception);
+            $response = new Response(500, [], 'Internal Server Error');
+        } finally {
+            try {
+                if ($response instanceof Response) {
+                    $this->writeResponse($client, $response);
+                }
+            } catch (\Throwable $exception) {
+                \error_log('Response write error: ' . $exception);
+            } finally {
+                \fclose($client);
+            }
         }
     }
 
@@ -157,7 +174,27 @@ class App
      */
     private function writeResponse($client, Response $response): void
     {
-        \fwrite($client, (string) $response);
+        $payload = (string) $response;
+        $offset = 0;
+        $length = \strlen($payload);
+        $deadline = \microtime(true) + $this->httpOptions->writeTimeout;
+        $socket = \str_contains(\stream_get_meta_data($client)['stream_type'], 'socket');
+
+        while ($offset < $length) {
+            $remaining = $deadline - \microtime(true);
+            if ($remaining <= 0) {
+                throw new AppException('Response write timed out.');
+            }
+            if ($socket) {
+                $seconds = (int) $remaining;
+                \stream_set_timeout($client, $seconds, (int) (($remaining - $seconds) * 1_000_000));
+            }
+            $written = @\fwrite($client, \substr($payload, $offset, 8192));
+            if ($written === false || $written === 0) {
+                throw new AppException('Failed to write response to client.');
+            }
+            $offset += $written;
+        }
     }
 
     /** @param Container<mixed> $imports */

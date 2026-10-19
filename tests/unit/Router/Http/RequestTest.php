@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace dvictorjhg\braidphp\tests\unit\Router\Http;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
 use dvictorjhg\braidphp\Router\Http\Request;
@@ -165,6 +166,26 @@ final class RequestTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Invalid target '/invalid' for 'GET' method.");
         $request->withRequestTarget('/invalid');
+    }
+
+    #[DataProvider('optionsTargets')]
+    public function testAcceptsOptionsTargets(string $target): void
+    {
+        $request = new Request(method: HttpMethod::OPTIONS, uri: $target);
+
+        self::assertSame('OPTIONS', $request->getMethod());
+        self::assertSame($target, $request->getRequestTarget());
+    }
+
+    /** @return array<string, array{string}> */
+    public static function optionsTargets(): array
+    {
+        return [
+            'root' => ['/'],
+            'resource' => ['/resource?name=value'],
+            'absolute' => ['http://example.test/resource'],
+            'asterisk' => ['*'],
+        ];
     }
 
     public function testChangesMethodImmutablyAndRejectsUnsupportedMethods(): void

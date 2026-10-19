@@ -1,5 +1,5 @@
 # base
-FROM docker.io/library/php:8.5.10-cli-trixie AS base
+FROM docker.io/library/php:8.5.11-cli-trixie AS base
 ARG ENVIRONMENT
 ENV ENVIRONMENT=${ENVIRONMENT}
 ARG APP_PATH

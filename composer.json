@@ -48,7 +48,21 @@
     },
     "archive": {
         "exclude": [
-            "/Example/"
+            "/Example/",
+            "/vendor/",
+            "/benchmarks/vendor/",
+            "/benchmarks/results/",
+            "/build/",
+            "/coverage/",
+            "/debug/",
+            "/logs/",
+            "/cache/",
+            "/.phpunit*",
+            "/.playwright*/",
+            "/.scannerwork/",
+            "/.vscode/",
+            "/.env*",
+            "/composer.lock"
         ]
     },
     "scripts": {
@@ -59,13 +73,13 @@
             "@php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-clover build/test-results/clover.xml --coverage-html build/test-results/coverage-html"
         ],
         "test-coverage": "@test:coverage",
-        "coverage:check": "@php tools/check-coverage.php build/test-results/clover.xml 80",
+        "coverage:check": "@php tools/check-coverage.php",
         "check-style": "phpcs src Example tests",
         "fix-style": "phpcbf src Example tests"
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0-dev"
+            "dev-main": "1.1.x-dev"
         }
     },
     "config": {

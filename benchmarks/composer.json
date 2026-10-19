@@ -1,0 +1,28 @@
+{
+    "name": "braidphp/http-benchmarks",
+    "description": "Isolated HTTP benchmark competitors; not framework dependencies.",
+    "type": "project",
+    "license": "Apache-2.0",
+    "require": {
+        "dvictorjhg/braidphp": "dev-main",
+        "php": "^8.4",
+        "flightphp/core": "^3.0",
+        "slim/psr7": "^1.7",
+        "slim/slim": "^4.14"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "..",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "dvictorjhg/braidphp": "dev-main"
+                }
+            }
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    }
+}

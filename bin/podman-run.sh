@@ -107,7 +107,7 @@ if [ -z "$environment" ]; then
 fi
 
 server_port=$(get_setting "SERVER_PORT" "8000")
-image_tag=$(get_setting "DOCKER_IMAGE_TAG" "php-8.5.10-cli-trixie")
+image_tag=$(get_setting "DOCKER_IMAGE_TAG" "php-8.5.11-cli-trixie")
 app_path=$(get_setting "APP_PATH" "/app")
 image_name="localhost/dvictorjhg/braidphp:${image_tag}-${environment}"
 container_name="braidphp-${environment}"

@@ -167,6 +167,36 @@ class RouterTest extends TestCase
         $this->assertInstanceOf(RouteMatch::class, $route);
     }
 
+    public function testRepeatedMatchesKeepRequestParametersSeparate(): void
+    {
+        $router = new Router();
+        $route = new Route(
+            httpMethod: HttpMethod::GET,
+            path: '/users/:name',
+            action: [TestController::class, 'get']
+        );
+        $router->setRoutes($route);
+
+        foreach (['Ada', 'Grace%20Hopper', 'Ada'] as $name) {
+            $match = $router->processRoutes(new Request(method: HttpMethod::GET, uri: '/users/' . $name));
+            self::assertInstanceOf(RouteMatch::class, $match);
+            self::assertSame($route, $match->route);
+            self::assertSame(['name' => \urldecode($name)], $match->params);
+        }
+
+        $replacement = new Route(
+            httpMethod: HttpMethod::GET,
+            path: '/teams/:name',
+            action: [TestController::class, 'get']
+        );
+        $router->getRoutes()[0] = $replacement;
+        self::assertNull($router->processRoutes(new Request(method: HttpMethod::GET, uri: '/users/Ada')));
+        $match = $router->processRoutes(new Request(method: HttpMethod::GET, uri: '/teams/Core'));
+        self::assertInstanceOf(RouteMatch::class, $match);
+        self::assertSame($replacement, $match->route);
+        self::assertSame(['name' => 'Core'], $match->params);
+    }
+
     public function testNoMatchRoute(): void
     {
         $request = new Request(method: HttpMethod::GET, uri: self::ROUTE_PATH);

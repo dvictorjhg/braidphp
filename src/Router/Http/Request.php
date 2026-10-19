@@ -82,9 +82,9 @@ class Request extends Message implements RequestInterface
      * @param resource $resource
      * @return Request|null
      */
-    public static function fromResource(mixed $resource): ?Request
+    public static function fromResource(mixed $resource, ?HttpOptions $options = null): ?Request
     {
-        return RequestParser::fromResource($resource);
+        return RequestParser::fromResource($resource, $options);
     }
 
     /**
@@ -104,13 +104,12 @@ class Request extends Message implements RequestInterface
         $authorityForm = $this->uri->getAuthority();
         $asteriskForm = '*';
 
-        $isConnectOrOptions = \in_array($this->method, ['CONNECT', 'OPTIONS']);
         $isOriginOrAbsoluteForm = $requestTarget === $originForm || $requestTarget === $absoluteForm;
         $isConnectAndAuthorityForm = $this->method === 'CONNECT' && $requestTarget === $authorityForm;
         $isOptionsAndAsteriskForm = $this->method === 'OPTIONS' && $requestTarget === $asteriskForm;
 
         if (
-            (!$isConnectOrOptions && $isOriginOrAbsoluteForm)
+            ($this->method !== 'CONNECT' && $isOriginOrAbsoluteForm)
             || $isConnectAndAuthorityForm
             || $isOptionsAndAsteriskForm
         ) {

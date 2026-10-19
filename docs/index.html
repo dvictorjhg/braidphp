@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/site.css?v=20261011-2">
-    <script type="module" src="assets/js/site.js?v=20261011-2"></script>
+    <link rel="stylesheet" href="assets/css/site.css?v=20261019-2">
+    <script type="module" src="assets/js/site.js?v=20261019-3"></script>
 </head>
 <body>
     <a class="skip-link" href="#overview" data-i18n="nav.skip">Skip to documentation</a>
@@ -24,18 +24,18 @@
                     </svg>
                     <span class="brand-copy">
                         <span class="brand-name">Braid<span class="brand-accent">PHP</span></span>
-                        <span class="version" data-i18n="brand.version">1.0.2</span>
+                        <span class="version" data-i18n="brand.version">1.1.0</span>
                     </span>
                 </a>
                 <div class="nav-tools">
                     <fieldset class="theme-toggle">
                         <legend class="sr-only" data-i18n="theme.label">Theme</legend>
                         <button class="theme-button" type="button" data-theme-choice="light" aria-pressed="true">
-                            <span class="theme-icon" aria-hidden="true">sun</span>
+                            <span class="theme-icon" aria-hidden="true">&#9728;</span>
                             <span data-i18n="theme.light">Light</span>
                         </button>
                         <button class="theme-button" type="button" data-theme-choice="dark" aria-pressed="false">
-                            <span class="theme-icon" aria-hidden="true">moon</span>
+                            <span class="theme-icon" aria-hidden="true">&#9790;</span>
                             <span data-i18n="theme.dark">Dark</span>
                         </button>
                     </fieldset>
@@ -554,7 +554,7 @@ $app-&gt;bootstrapModule(new StartupModule());</code></pre>
                         <span class="section-number" data-i18n="routing.number">04 / Routing</span>
                         <h2 data-i18n="routing.title">Declare routes where the controller lives.</h2>
                     </div>
-                    <p class="muted" data-i18n="routing.lede">RouteScanner reads class and method attributes, Router walks the resulting tree depth-first, and App::handleRequest() attaches the matched parameters to a request copy.</p>
+                    <p class="muted" data-i18n="routing.lede">RouteScanner reads class and method attributes, Router walks the resulting tree depth-first, and App::handleRequest() attaches the matched parameters to a request copy. Immutable route-path segments are reused across dispatches; request parameters and custom matcher results are never cached.</p>
                 </div>
                 <div class="routing-grid">
                     <div class="code-panel routing-code">
@@ -962,13 +962,13 @@ demo failure</code></pre>
                             <li>A framework Response is returned unchanged.</li>
                             <li>Null, scalars, native streams, PSR streams, and stringable objects become a 200 Response. Set your content type explicitly.</li>
                             <li>Arrays raise AppException; ordinary non-stringable objects fail stream conversion. Return json_encode() in a Response for JSON.</li>
-                            <li>handleRequest() propagates action exceptions. Only listen() catches them and sends a 500 body containing the exception message.</li>
+                            <li>handleRequest() propagates action exceptions. Only listen() catches them, logs details server-side, and sends a generic 500 response.</li>
                         </ul></div>
                     </article>
                     <article class="doc-card">
                         <h3 data-i18n="recipes.testsTitle">Repeatable checks</h3>
                         <p data-i18n="recipes.testsText">The documentation checker executes marked examples in isolated PHP processes and compares exact output. It needs PHP DOM and proc_open. The first-app files and live example routes can also be checked through handleRequest() without binding a port.</p>
-                        <pre><code>php tools/check-docs.php
+                        <pre><code class="language-bash">php tools/check-docs.php
 composer test</code></pre>
                         <p data-i18n="recipes.scopeText">The injector is globally active, not request scoped. Avoid request data in cached services and avoid bootstrapping unrelated applications in the same process.</p>
                     </article>
@@ -996,7 +996,7 @@ composer test</code></pre>
                     <article class="doc-card">
                         <span class="small-label">01</span>
                         <h3 data-i18n="runtime.stage1Title">Raw socket to Request</h3>
-                        <p data-i18n="runtime.stage1Text">RequestParser reads the request line and headers from the stream, then reads the body according to Content-Length when it is present. An empty client stream yields no request.</p>
+                        <p data-i18n="runtime.stage1Text">RequestParser uses HttpOptions for the total read deadline and header/body byte limits. Defaults are five seconds, 64 KiB of headers, and 8 MiB of body. Invalid or duplicate lengths, truncated bodies, and Transfer-Encoding are rejected. An empty client stream yields no request.</p>
                     </article>
                     <article class="doc-card">
                         <span class="small-label">02</span>
@@ -1011,7 +1011,7 @@ composer test</code></pre>
                     <article class="doc-card">
                         <span class="small-label">04</span>
                         <h3 data-i18n="runtime.stage4Title">Result conversion and failures</h3>
-                        <p data-i18n="runtime.stage4Text">A Response is returned unchanged. Null, scalars, native PHP stream resources, existing PSR streams, and stringable objects become Response(200, [], body). Arrays raise AppException, while objects that are neither stringable nor streams raise InvalidArgumentException during body conversion. The socket loop converts uncaught throwables into a 500 response body starting with “Server Error:”.</p>
+                        <p data-i18n="runtime.stage4Text">A Response is returned unchanged. Null, scalars, native PHP stream resources, existing PSR streams, and stringable objects become Response(200, [], body). Arrays raise AppException; non-stringable objects fail body conversion. The socket loop logs uncaught throwables and returns a generic 500 response. Partial writes use HttpOptions::writeTimeout, defaulting to five seconds.</p>
                     </article>
                 </div>
                 <div class="runtime-grid">
@@ -1042,7 +1042,7 @@ $app-&gt;listen(
                     </div>
                     <div class="status-grid">
                         <div class="status-item status-404"><strong>404</strong><div><span data-i18n="runtime.notFoundTitle">No matching route</span><p data-i18n="runtime.notFoundText">App::handleRequest() returns a plain Not Found response.</p></div></div>
-                        <div class="status-item status-500"><strong>500</strong><div><span data-i18n="runtime.serverErrorTitle">Unhandled throwable</span><p data-i18n="runtime.serverErrorText">The listen loop catches it and writes “Server Error: …” in the response body.</p></div></div>
+                        <div class="status-item status-500"><strong>500</strong><div><span data-i18n="runtime.serverErrorTitle">Unhandled throwable</span><p data-i18n="runtime.serverErrorText">The listener logs the exception server-side and returns Internal Server Error without exposing its details. Malformed requests receive 400 Bad Request.</p></div></div>
                     </div>
                 </div>
             </div>
@@ -1064,21 +1064,53 @@ $app-&gt;listen(
                     </article>
                     <article class="doc-card">
                         <span class="small-label" data-i18n="operations.deployLabel">Deployment guidance</span>
-                        <div data-i18n-html="operations.deployHtml"><ul class="checklist"><li>Use <code>php Example/index.php</code> or your own front controller for direct local runs.</li><li>Because the runtime is single-process and blocking, scale by running multiple container or process instances behind a reverse proxy or platform load balancer.</li><li>The repository Docker image uses PHP <code>8.5.10</code>, while the package requirement remains PHP <code>^8.4</code>.</li><li>Do not expect long-running concurrent workloads to be multiplexed inside one BraidPHP listener process.</li></ul></div>
+                        <div data-i18n-html="operations.deployHtml"><ul class="checklist"><li>Use <code>php Example/index.php</code> or your own front controller for direct local runs.</li><li>Because the runtime is single-process and blocking, scale by running multiple container or process instances behind a reverse proxy or platform load balancer.</li><li>The repository Docker image uses PHP <code>8.5.11</code>, while the package requirement remains PHP <code>^8.4</code>.</li><li>Do not expect long-running concurrent workloads to be multiplexed inside one BraidPHP listener process.</li></ul></div>
                     </article>
+                </div>
+                <div class="code-panel gap-top">
+                    <div class="panel-topline"><span data-i18n="operations.optionsTitle">Per-application HTTP options</span><span class="code-badge">PHP</span></div>
+                    <p data-i18n="operations.optionsText">Pass immutable HttpOptions to App or directly to Request::fromResource(). Sizes are bytes, deadlines are finite positive seconds, and backlog is a positive socket queue size. Defaults are 65536 header bytes, 8388608 body bytes, five seconds for each deadline, and backlog 128. Zero body bytes rejects nonempty bodies. Invalid options throw InvalidArgumentException; no vendor edits are needed.</p>
+                    <pre><code data-example="http-options">&lt;?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/vendor/autoload.php';
+
+use dvictorjhg\braidphp\Core\App;
+use dvictorjhg\braidphp\Router\Http\HttpOptions;
+use dvictorjhg\braidphp\Router\Http\Request;
+
+$options = new HttpOptions(
+    maxHeaderBytes: 131_072,
+    maxBodyBytes: 16_777_216,
+    readTimeout: 10.0,
+    writeTimeout: 10.0,
+    backlog: 256,
+);
+$app = new App(httpOptions: $options);
+$stream = fopen('php://temp', 'w+');
+fwrite($stream, "POST / HTTP/1.1\r\nContent-Length:4\r\n\r\ndata");
+rewind($stream);
+try {
+    $request = Request::fromResource($stream, $options);
+    echo (string) $request?-&gt;getBody();
+} finally {
+    fclose($stream);
+}</code></pre>
+                    <div class="example-output"><span class="example-output-label" data-i18n="example.expectedOutput">Expected output</span><pre><code data-output-for="http-options">data</code></pre></div>
                 </div>
                 <div class="doc-grid two-up gap-top">
                     <article class="doc-card step-card">
                         <span class="small-label" data-i18n="operations.composeLabel">Docker / Compose</span>
                         <h3 data-i18n="operations.composeTitle">Use the checked-in image definition.</h3>
                         <p data-i18n="operations.composeText">docker-compose.yml builds docker/php/php.Dockerfile, passes APP_PATH and ENVIRONMENT, exposes SERVER_PORT, and mounts src/, Example/, tests/, coverage/, and debug/.</p>
-                        <pre><code>docker compose up --build php</code></pre>
+                        <pre><code class="language-bash">docker compose up --build php</code></pre>
                     </article>
                     <article class="doc-card step-card">
                         <span class="small-label" data-i18n="operations.podmanLabel">Podman helpers</span>
                         <h3 data-i18n="operations.podmanTitle">Use the repository scripts when Podman is your container runtime.</h3>
                         <p data-i18n="operations.podmanText">bin/podman-run.sh and bin/podman-run.ps1 both read .env, build the selected target from docker/php/php.Dockerfile, create debug/ and coverage/, publish SERVER_PORT, and mount source directories in development mode.</p>
-                        <pre><code>./bin/podman-run.sh --environment development --detach
+                        <pre><code class="language-bash">./bin/podman-run.sh --environment development --detach
 podman exec braidphp-development composer test
 ./bin/podman-run.sh --action down</code></pre>
                     </article>
@@ -1096,7 +1128,7 @@ podman exec braidphp-development composer test
         <section class="section pale" id="listener-limits">
             <div class="wrap">
                 <h2 data-i18n="operations.safetyTitle">Public listener limitations</h2>
-                <p data-i18n="operations.safetyText">This is a minimal HTTP listener, not a hardened edge server. TLS, worker supervision, timeouts, request size limits, and rate limiting need an external boundary. Chunked request decoding and persistent connections are not provided. Return sanitized errors in application code: listener-generated 500 responses expose exception messages. Do not assume HEAD automatically suppresses a response body or an unmatched method returns 405.</p>
+                <p data-i18n="operations.safetyText">This is a minimal HTTP listener, not a hardened edge server. TLS, worker supervision, and rate limiting need an external boundary. Configure byte limits, read/write deadlines, and backlog with HttpOptions. Chunked requests are rejected and persistent connections are not provided. Listener errors are sanitized and logged server-side. HEAD does not automatically suppress the body, and unmatched methods do not automatically return 405.</p>
             </div>
         </section>
 
@@ -1116,7 +1148,7 @@ podman exec braidphp-development composer test
                 </div>
                 <div class="command-panel code-panel">
                     <div class="panel-topline"><span class="quickstart-label" data-i18n="development.commandsTitle">Commands</span><span class="code-badge">CI</span></div>
-                    <pre><code>php tools/check-docs.php
+                    <pre><code class="language-bash">php tools/check-docs.php
 composer validate --strict
 composer check-platform-reqs
 composer analyse
@@ -1125,7 +1157,8 @@ composer test
 composer test:coverage
 composer coverage:check</code></pre>
                     <p class="command-note" data-i18n="development.ciText">The CI workflow runs on PHP 8.4 and 8.5, uploads build/test-results/clover.xml to Codecov, and fails the local coverage gate if statements drop below 80%.</p>
-                    <p class="command-note" data-i18n="development.releaseText">For a release, update CHANGELOG.md, run the commands above, create and push an annotated tag such as 1.0.2, publish a GitHub Release, and refresh the package on Packagist.</p>
+                    <p class="command-note" data-i18n="development.customizeText">Forward PHPUnit filters with composer test -- --filter AppTest. Override the coverage report and threshold with composer coverage:check -- build/test-results/clover.xml 90. PHPStan, PHPUnit, and PHP_CodeSniffer accept custom --configuration or --standard paths. Runtime options are independent of these development tools.</p>
+                    <p class="command-note" data-i18n="development.releaseText">Prepare BraidPHP 1.1.0 by aligning the changelog, citation metadata, and documentation versions; run every check above, review composer audit, and inspect composer archive. Publish PHPInjector 1.0.3 first. Tag and publish only after verification; package versions come from Git tags.</p>
                 </div>
             </div>
         </section>

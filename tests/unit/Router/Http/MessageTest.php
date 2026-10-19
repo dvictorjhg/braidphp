@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace dvictorjhg\braidphp\tests\unit\Router\Http;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\Message;
 use dvictorjhg\braidphp\Router\Http\Response;
@@ -82,5 +83,54 @@ final class MessageTest extends TestCase
             200,
             ['X-Trace' => ['valid', 1]]
         ]);
+    }
+
+    #[DataProvider('invalidHeaders')]
+    public function testRejectsInvalidHeaders(string $operation, string $name, string $value): void
+    {
+        $message = new Response(headers: ['X-Trace' => 'safe']);
+        $this->expectException(\InvalidArgumentException::class);
+
+        match ($operation) {
+            'construct' => new Response(headers: [$name => $value]),
+            'replace' => $message->withHeader($name, $value),
+            'append existing' => $message->withAddedHeader('X-Trace', ['safe', $value]),
+            default => $message->withAddedHeader($name, $value),
+        };
+    }
+
+    /** @return iterable<string, array{string, string, string}> */
+    public static function invalidHeaders(): iterable
+    {
+        $headers = [
+            'empty name' => ['', 'safe'],
+            'space in name' => ['X Trace', 'safe'],
+            'colon in name' => ['X:Trace', 'safe'],
+            'injected name' => ["X-Trace\r\nX-Injected", 'safe'],
+            'injected value' => ['X-Trace', "safe\r\nX-Injected: yes"],
+            'bare carriage return' => ['X-Trace', "safe\rvalue"],
+            'bare newline' => ['X-Trace', "safe\nvalue"],
+            'null byte' => ['X-Trace', "safe\0value"],
+            'control byte' => ['X-Trace', "safe\x1Fvalue"],
+            'delete byte' => ['X-Trace', "safe\x7Fvalue"],
+        ];
+        foreach (['construct', 'replace', 'append', 'append existing'] as $operation) {
+            foreach ($headers as $label => [$name, $value]) {
+                if ($operation === 'append existing' && $name !== 'X-Trace') {
+                    continue;
+                }
+                yield "$operation: $label" => [$operation, $name, $value];
+            }
+        }
+    }
+
+    public function testAcceptsValidHeaderTokensAndValues(): void
+    {
+        $name = "X-!#$%&'*+.^_`|~";
+        $value = "\t visible \x80\xFF";
+        $message = new Response(headers: [$name => $value]);
+
+        self::assertSame([$value], $message->getHeader($name));
+        self::assertSame([$value, ''], $message->withAddedHeader($name, '')->getHeader($name));
     }
 }
