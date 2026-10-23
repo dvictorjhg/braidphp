@@ -6,14 +6,30 @@ namespace dvictorjhg\braidphp\tests\unit\Router\Http;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
 use dvictorjhg\braidphp\Router\Http\Request;
+use dvictorjhg\braidphp\Router\Http\RequestException;
 use dvictorjhg\braidphp\Router\Http\Uri;
 
 #[CoversClass(Request::class)]
 final class RequestTest extends TestCase
 {
+    public function testReportsFailureToOpenInputStream(): void
+    {
+        self::assertTrue(\stream_wrapper_unregister('php'));
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Failed to open input stream from php://input');
+
+        try {
+            self::assertSame('', (string) (new Request())->getBody());
+        } finally {
+            self::assertTrue(\stream_wrapper_restore('php'));
+        }
+    }
+
     public function testParsesQueryParameters(): void
     {
         $request = new Request(
@@ -233,6 +249,22 @@ final class RequestTest extends TestCase
         );
 
         self::assertSame(['example.test:8080'], $request->getHeader('Host'));
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testReadsAndValidatesSapiHeaders(): void
+    {
+        if (\function_exists('getallheaders')) {
+            self::markTestSkipped('The SAPI already defines getallheaders().');
+        }
+        require_once __DIR__ . '/../../../Mock/ServerHeaders.php';
+
+        $request = new Request(method: HttpMethod::GET, uri: '/', body: '');
+
+        self::assertSame(['sapi-header'], $request->getHeader('X-Trace'));
+        self::assertFalse($request->hasHeader('X-Invalid'));
+        self::assertFalse($request->hasHeader('0'));
     }
 
     public function testReadsHttpHeadersFromServerVariables(): void

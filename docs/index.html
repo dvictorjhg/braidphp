@@ -24,7 +24,7 @@
                     </svg>
                     <span class="brand-copy">
                         <span class="brand-name">Braid<span class="brand-accent">PHP</span></span>
-                        <span class="version" data-i18n="brand.version">1.1.0</span>
+                        <span class="version" data-i18n="brand.version">1.1.1</span>
                     </span>
                 </a>
                 <div class="nav-tools">
@@ -176,7 +176,7 @@ final class GreeterComponent
                         <span class="small-label" data-i18n="overview.prereqLabel">Prerequisites</span>
                         <div data-i18n-html="overview.prereqHtml">
                             <ul class="checklist">
-                                <li>PHP ^8.4</li>
+                                <li>PHP 8.4.27+ or 8.5.12+</li>
                                 <li>Composer</li>
                                 <li>A second terminal for curl while the server keeps running</li>
                             </ul>
@@ -210,11 +210,11 @@ final class GreeterComponent
                     <article class="doc-card step-card">
                         <span class="small-label">01</span>
                         <h3 data-i18n="first.step1Title">Create the project and install BraidPHP.</h3>
-                        <p data-i18n="first.step1Text">Start with a composer.json that declares PHP ^8.4, requires the package, and maps the App namespace to src/.</p>
+                        <p data-i18n="first.step1Text">Start with a composer.json that requires security-patched PHP, requires the package, and maps the App namespace to src/.</p>
                         <pre><code>{
     "name": "acme/hello-braid",
     "require": {
-        "php": "^8.4",
+        "php": "~8.4.27 || ^8.5.12",
         "dvictorjhg/braidphp": "^1.0"
     },
     "autoload": {
@@ -1064,7 +1064,7 @@ $app-&gt;listen(
                     </article>
                     <article class="doc-card">
                         <span class="small-label" data-i18n="operations.deployLabel">Deployment guidance</span>
-                        <div data-i18n-html="operations.deployHtml"><ul class="checklist"><li>Use <code>php Example/index.php</code> or your own front controller for direct local runs.</li><li>Because the runtime is single-process and blocking, scale by running multiple container or process instances behind a reverse proxy or platform load balancer.</li><li>The repository Docker image uses PHP <code>8.5.11</code>, while the package requirement remains PHP <code>^8.4</code>.</li><li>Do not expect long-running concurrent workloads to be multiplexed inside one BraidPHP listener process.</li></ul></div>
+                        <div data-i18n-html="operations.deployHtml"><ul class="checklist"><li>Use <code>php Example/index.php</code> or your own front controller for direct local runs.</li><li>Because the runtime is single-process and blocking, scale by running multiple container or process instances behind a reverse proxy or platform load balancer.</li><li>The repository Docker image uses PHP <code>8.5.12</code>; the package requires PHP <code>~8.4.27 || ^8.5.12</code>.</li><li>Do not expect long-running concurrent workloads to be multiplexed inside one BraidPHP listener process.</li></ul></div>
                     </article>
                 </div>
                 <div class="code-panel gap-top">
@@ -1158,7 +1158,7 @@ composer test:coverage
 composer coverage:check</code></pre>
                     <p class="command-note" data-i18n="development.ciText">The CI workflow runs on PHP 8.4 and 8.5, uploads build/test-results/clover.xml to Codecov, and fails the local coverage gate if statements drop below 80%.</p>
                     <p class="command-note" data-i18n="development.customizeText">Forward PHPUnit filters with composer test -- --filter AppTest. Override the coverage report and threshold with composer coverage:check -- build/test-results/clover.xml 90. PHPStan, PHPUnit, and PHP_CodeSniffer accept custom --configuration or --standard paths. Runtime options are independent of these development tools.</p>
-                    <p class="command-note" data-i18n="development.releaseText">Prepare BraidPHP 1.1.0 by aligning the changelog, citation metadata, and documentation versions; run every check above, review composer audit, and inspect composer archive. Publish PHPInjector 1.0.3 first. Tag and publish only after verification; package versions come from Git tags.</p>
+                    <p class="command-note" data-i18n="development.releaseText">For each release, align the changelog, citation, and documentation versions. Run every check above, review composer audit, and inspect composer archive. Publish any required PHPInjector release first and verify the dependency in a clean application. Tag and publish only after verification; package versions come from Git tags.</p>
                 </div>
             </div>
         </section>

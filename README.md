@@ -16,7 +16,7 @@ PSR HTTP messages, and a lightweight single-process TCP HTTP runtime.
 Dependency injection and provider storage are delegated to the standalone
 [`dvictorjhg/php-injector`](https://github.com/dvictorjhg/php-injector) package.
 
-- **Package requirement:** PHP `^8.4`
+- **Package requirement:** PHP `~8.4.27 || ^8.5.12`
 - **Runtime model:** one blocking process accepts, parses, routes, invokes, and
   writes each request in sequence
 - **Main source areas:** [`src/Core`](src/Core) and [`src/Router`](src/Router)
@@ -135,7 +135,7 @@ private/heap memory, and keep-alive are not measured.
 
 ## Requirements
 
-- PHP ^8.4
+- PHP 8.4.27+ or 8.5.12+ (security-patched releases)
 - Composer
 
 ## Installation
@@ -430,10 +430,10 @@ podman exec braidphp-development composer test
 ./bin/podman-run.sh --action down
 ```
 
-The default `.env` values expose `SERVER_PORT=8000` and set the base PHP image
-tag to `php-8.5.11-cli-trixie`. The Podman launcher appends the environment
-name, so its default development image is
-`localhost/dvictorjhg/braidphp:php-8.5.11-cli-trixie-development`.
+The local `.env` configures `SERVER_PORT` and `DOCKER_IMAGE_TAG`. Use
+`SERVER_PORT=8000` and `DOCKER_IMAGE_TAG=php-8.5.12-cli-trixie` for the patched
+container base. The Podman launcher appends the environment name, producing
+`localhost/dvictorjhg/braidphp:php-8.5.12-cli-trixie-development`.
 
 ## Changelog
 
@@ -451,18 +451,18 @@ opening a public issue.
 
 ## Release / Publishing
 
-The next release is **1.1.0**. Finalize its dated entry in
-[CHANGELOG.md](CHANGELOG.md), keep [CITATION.cff](CITATION.cff) and the English
-and Spanish documentation version labels aligned, and run every development
-command above. Review `composer audit` and inspect a `composer archive` build
-for source, licensing files, and unwanted local artifacts before tagging.
+For each release, finalize the dated entry in [CHANGELOG.md](CHANGELOG.md),
+align [CITATION.cff](CITATION.cff) and the English and Spanish documentation
+version labels, and run every development command above. Review `composer audit`
+and inspect a `composer archive` build for source, licensing files, and unwanted
+local artifacts before creating the annotated version tag.
+No tag, push, or publication is part of local release preparation.
 
-Publish PHPInjector **1.0.3** first, then create and push the annotated BraidPHP
-tag `1.1.0`, publish the GitHub Release, and refresh Packagist. Composer derives
-the package version from the Git tag; do not add a `version` field to
-`composer.json`. Configuration defaults remain compatible with unconfigured
-calls; malformed request framing is now rejected and listener error details are
-logged instead of exposed to clients.
+Publish any required PHPInjector release first and verify the intended dependency
+constraint in a clean application. After the BraidPHP tag is on GitHub, publish a
+GitHub Release and refresh Packagist. Composer derives the package version from
+Git tags; do not add a `version` field to `composer.json`. Release-specific
+behavior and compatibility requirements belong in the changelog.
 
 ## License And Attribution
 

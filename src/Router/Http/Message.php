@@ -23,6 +23,7 @@ abstract class Message implements MessageInterface
         mixed $body = null,
         protected string $protocolVersion = '1.1'
     ) {
+        self::validateProtocolVersion($protocolVersion);
         $this->headers = [];
         foreach ($headers as $name => $values) {
             self::validateHeaderName($name);
@@ -44,6 +45,7 @@ abstract class Message implements MessageInterface
     #[\Override]
     public function withProtocolVersion(string $version): MessageInterface
     {
+        self::validateProtocolVersion($version);
         if ($this->protocolVersion === $version) {
             return $this;
         }
@@ -180,6 +182,13 @@ abstract class Message implements MessageInterface
         }
 
         return $normalizedValues;
+    }
+
+    private static function validateProtocolVersion(string $version): void
+    {
+        if (\preg_match('/^\d+(?:\.\d+)?$/D', $version) !== 1) {
+            throw new \InvalidArgumentException('Invalid HTTP protocol version.');
+        }
     }
 
     private static function validateHeaderName(string $name): void

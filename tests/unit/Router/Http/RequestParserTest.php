@@ -10,11 +10,68 @@ use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\HttpOptions;
 use dvictorjhg\braidphp\Router\Http\Request;
 use dvictorjhg\braidphp\Router\Http\RequestParser;
+use dvictorjhg\braidphp\tests\Mock\FailingStream;
 
 #[CoversClass(RequestParser::class)]
 #[CoversClass(HttpOptions::class)]
 final class RequestParserTest extends TestCase
 {
+    #[DataProvider('invalidReadLengths')]
+    public function testRejectsInvalidReadLengths(int $length, bool $line): void
+    {
+        $resource = $this->resourceFrom('data');
+        $method = new \ReflectionMethod(RequestParser::class, 'readChunk');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid request read length.');
+
+        try {
+            $method->invoke(null, $resource, $length, \microtime(true) + 1, $line);
+        } finally {
+            \fclose($resource);
+        }
+    }
+
+    /** @return array<string, array{int, bool}> */
+    public static function invalidReadLengths(): array
+    {
+        return ['zero' => [0, false], 'negative' => [-1, false], 'line buffer' => [1, true]];
+    }
+
+    public function testReportsUnderlyingReadFailure(): void
+    {
+        self::assertTrue(\stream_wrapper_register('braidrequestfailure', FailingStream::class));
+        $resource = \fopen('braidrequestfailure://stream', 'r');
+        self::assertIsResource($resource);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Failed to read request stream.');
+
+        try {
+            @RequestParser::fromResource($resource);
+        } finally {
+            \fclose($resource);
+            self::assertTrue(\stream_wrapper_unregister('braidrequestfailure'));
+        }
+    }
+
+    #[DataProvider('invalidRawRequests')]
+    public function testRawParserRejectsMalformedInput(string $raw, string $message): void
+    {
+        $method = new \ReflectionMethod(RequestParser::class, 'fromRawRequest');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        $method->invoke(null, $raw);
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function invalidRawRequests(): array
+    {
+        return [
+            'separator' => ['GET / HTTP/1.1', 'The raw request is missing its header separator.'],
+            'header' => ["GET / HTTP/1.1\r\nInvalid-Header\r\n\r\n", 'The raw request contains an invalid header.'],
+        ];
+    }
+
     public function testRejectsNonResource(): void
     {
         $this->expectException(\InvalidArgumentException::class);

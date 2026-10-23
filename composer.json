@@ -22,8 +22,8 @@
         "docs": "https://dvictorjhg.github.io/braidphp/"
     },
     "require": {
-        "dvictorjhg/php-injector": "^1.0.1",
-        "php": "^8.4",
+        "dvictorjhg/php-injector": "^1.0.5",
+        "php": "~8.4.27 || ^8.5.12",
         "psr/http-message": "^2.0"
     },
     "require-dev": {

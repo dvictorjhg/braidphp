@@ -7,6 +7,19 @@ principles and Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-23
+
+### Security
+
+- Require PHP 8.4.27+ or 8.5.12+ and update development and production container bases to PHP 8.5.12.
+- Reject invalid response status codes, reason-phrase control bytes, and malformed protocol versions during construction and mutation to prevent HTTP response splitting.
+- Audit Composer dependencies in CI and document reverse-proxy, development-image, and shared-provider trust boundaries.
+
+### Changed
+
+- Expand request parsing, stream failure, SAPI header, and listener regression coverage, reaching 99.76% statement coverage without excluding defensive code.
+- Replace stale version-specific publishing instructions with a reusable release checklist.
+
 ## [1.1.0] - 2026-10-19
 
 ### Added

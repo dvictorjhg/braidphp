@@ -5,13 +5,60 @@ declare(strict_types=1);
 namespace dvictorjhg\braidphp\tests\unit\Router\Http;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\Stream;
 use dvictorjhg\braidphp\Router\Http\StreamException;
+use dvictorjhg\braidphp\tests\Mock\FailingStream;
 
 #[CoversClass(Stream::class)]
 final class StreamTest extends TestCase
 {
+    public function testReportsUnsupportedNativeStreamPosition(): void
+    {
+        $resource = \fopen('php://stdout', 'w');
+        self::assertIsResource($resource);
+        $stream = new Stream($resource);
+        $this->expectException(StreamException::class);
+        $this->expectExceptionMessage('Unable to determine stream position');
+
+        try {
+            @$stream->tell();
+        } finally {
+            $stream->close();
+        }
+    }
+
+    #[DataProvider('failedOperations')]
+    public function testReportsUnderlyingIoFailures(string $operation, string $message): void
+    {
+        self::assertTrue(\stream_wrapper_register('braidfailure', FailingStream::class));
+        $resource = \fopen('braidfailure://stream', 'r+');
+        self::assertIsResource($resource);
+        $stream = new Stream($resource);
+        $this->expectException(StreamException::class);
+        $this->expectExceptionMessage($message);
+
+        try {
+            match ($operation) {
+                'write' => @$stream->write('payload'),
+                default => @$stream->read(1),
+            };
+        } finally {
+            $stream->close();
+            self::assertTrue(\stream_wrapper_unregister('braidfailure'));
+        }
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function failedOperations(): array
+    {
+        return [
+            'write' => ['write', 'Unable to write to stream'],
+            'read' => ['read', 'Unable to read from stream'],
+        ];
+    }
+
     public function testConstructsReadableWritableStream(): void
     {
         $resource = $this->resourceFrom('hello');

@@ -7,6 +7,7 @@ namespace dvictorjhg\braidphp\tests\unit\Router\Http;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
+use dvictorjhg\braidphp\Router\Http\StreamException;
 use dvictorjhg\braidphp\Router\Http\StreamFactory;
 
 #[CoversClass(StreamFactory::class)]
@@ -97,5 +98,18 @@ final class StreamFactoryTest extends TestCase
 
         self::assertSame('stream', \get_resource_type($resource));
         \fclose($resource);
+    }
+
+    public function testReportsFailureToCreateTemporaryStream(): void
+    {
+        self::assertTrue(\stream_wrapper_unregister('php'));
+        $this->expectException(StreamException::class);
+        $this->expectExceptionMessage('Temporary stream unavailable');
+
+        try {
+            @StreamFactory::createTemporaryStream('Temporary stream unavailable');
+        } finally {
+            self::assertTrue(\stream_wrapper_restore('php'));
+        }
     }
 }

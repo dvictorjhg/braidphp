@@ -7,6 +7,7 @@ namespace dvictorjhg\braidphp\tests\unit\Core;
 use PHPInjector\Container\Container;
 use PHPInjector\DI\Injector;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Core\App;
 use dvictorjhg\braidphp\Core\AppException;
@@ -159,6 +160,81 @@ final class AppTest extends TestCase
             $method->invoke(new App(), $client, new Response(body: 'body'));
             \rewind($client);
             self::assertStringContainsString('body', \stream_get_contents($client));
+        } finally {
+            \fclose($client);
+        }
+    }
+
+    #[RunInSeparateProcess]
+    public function testListenerServesConnectionAndClosesSocketWhenInterrupted(): void
+    {
+        if (!\function_exists('pcntl_alarm')) {
+            self::markTestSkipped('The bounded listener test requires pcntl.');
+        }
+        $reservation = \stream_socket_server('tcp://127.0.0.1:0');
+        self::assertIsResource($reservation);
+        $address = \stream_socket_get_name($reservation, false);
+        self::assertIsString($address);
+        $port = \substr($address, \strrpos($address, ':') + 1);
+        \fclose($reservation);
+
+        $client = null;
+        $previousAsyncSignals = \pcntl_async_signals(true);
+        $previousHandler = \pcntl_signal_get_handler(SIGALRM);
+        \pcntl_signal(SIGALRM, static function (): never {
+            throw new AppException('Listener test deadline reached.');
+        });
+        $bufferLevel = \ob_get_level();
+        \ob_start(static function (string $output) use ($address, &$client): string {
+            if (\str_contains($output, 'Server listening on')) {
+                $client = \stream_socket_client('tcp://' . $address, timeout: 1);
+                self::assertIsResource($client);
+                \stream_set_timeout($client, 1);
+                \fwrite($client, "GET / HTTP/1.1\r\n\r\n");
+                \stream_socket_shutdown($client, STREAM_SHUT_WR);
+            }
+            return $output;
+        }, 1);
+        $this->expectOutputString("Server listening on 127.0.0.1:$port...\n");
+
+        try {
+            \pcntl_alarm(2);
+            try {
+                (new App([Router::class => new Router()]))->listen('127.0.0.1', $port);
+                self::fail('Expected the listener deadline to interrupt accept.');
+            } catch (AppException $exception) {
+                self::assertSame('Listener test deadline reached.', $exception->getMessage());
+            }
+            self::assertIsResource($client);
+            $response = \stream_get_contents($client);
+            self::assertIsString($response);
+            self::assertStringStartsWith('HTTP/1.1 404 Not Found', $response);
+        } finally {
+            \pcntl_alarm(0);
+            \pcntl_signal(SIGALRM, $previousHandler);
+            \pcntl_async_signals($previousAsyncSignals);
+            if (\is_resource($client)) {
+                \fclose($client);
+            }
+            while (\ob_get_level() > $bufferLevel) {
+                \ob_end_flush();
+            }
+        }
+    }
+
+    public function testRejectsExpiredResponseWriteDeadline(): void
+    {
+        $client = \fopen('php://temp', 'w+');
+        self::assertIsResource($client);
+        $this->expectException(AppException::class);
+        $this->expectExceptionMessage('Response write timed out.');
+
+        try {
+            (new \ReflectionMethod(App::class, 'writeResponse'))->invoke(
+                new App(httpOptions: new HttpOptions(writeTimeout: PHP_FLOAT_MIN)),
+                $client,
+                new Response()
+            );
         } finally {
             \fclose($client);
         }

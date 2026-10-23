@@ -42,7 +42,7 @@ composer test
 - Add or update focused PHPUnit tests for behavioral changes.
 - Update `README.md`, `CHANGELOG.md`, and the documentation source when public behavior or examples change.
 - Keep documentation assets relative so the static page works from GitHub Pages and from a local checkout.
-- Keep the implementation compatible with PHP `^8.4`.
+- Keep the implementation compatible with the supported PHP branches listed in the README.
 - Follow [PSR-12](https://www.php-fig.org/psr/psr-12/).
 - Avoid unrelated refactors in the same pull request.
 

@@ -89,6 +89,7 @@ class Response extends Message implements ResponseInterface
         string $protocolVersion = '1.1',
         protected string $reasonPhrase = ''
     ) {
+        self::validateStatus($statusCode, $reasonPhrase);
         parent::__construct($headers, $body, $protocolVersion);
 
         if ($reasonPhrase === '') {
@@ -106,6 +107,7 @@ class Response extends Message implements ResponseInterface
     #[\Override]
     public function withStatus(int $code, string $reasonPhrase = ''): static
     {
+        self::validateStatus($code, $reasonPhrase);
         if ($code === $this->statusCode && $reasonPhrase === $this->reasonPhrase) {
             return $this;
         }
@@ -123,6 +125,16 @@ class Response extends Message implements ResponseInterface
     public function getReasonPhrase(): string
     {
         return $this->reasonPhrase;
+    }
+
+    private static function validateStatus(int $code, string $reasonPhrase): void
+    {
+        if ($code < 100 || $code > 599) {
+            throw new \InvalidArgumentException('HTTP status code must be between 100 and 599.');
+        }
+        if (\preg_match('/[^\x09\x20-\x7E\x80-\xFF]/', $reasonPhrase) === 1) {
+            throw new \InvalidArgumentException('Invalid HTTP reason phrase.');
+        }
     }
 
     public function __toString(): string

@@ -41,6 +41,29 @@ final class MessageTest extends TestCase
         self::assertSame('body', (string) (new Response(body: 'body'))->getBody());
     }
 
+    #[DataProvider('invalidProtocolVersions')]
+    public function testRejectsInvalidProtocolVersions(string $version, bool $construct): void
+    {
+        $message = new Response();
+        $this->expectException(\InvalidArgumentException::class);
+
+        if ($construct) {
+            self::assertSame($version, (new Response(protocolVersion: $version))->getProtocolVersion());
+        } else {
+            $message->withProtocolVersion($version);
+        }
+    }
+
+    /** @return iterable<string, array{string, bool}> */
+    public static function invalidProtocolVersions(): iterable
+    {
+        foreach (['', 'HTTP/1.1', '1.1 extra', "1.1\r\nX-Injected: yes", "1.1\0", "1.1\n"] as $version) {
+            foreach ([true, false] as $construct) {
+                yield ($construct ? 'construct: ' : 'replace: ') . \bin2hex($version) => [$version, $construct];
+            }
+        }
+    }
+
     public function testMessageMutatorsAreImmutable(): void
     {
         $message = new Response(headers: ['X-Trace' => 'one'], body: 'body');
