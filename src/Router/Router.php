@@ -3,7 +3,7 @@
 namespace dvictorjhg\braidphp\Router;
 
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
-use dvictorjhg\braidphp\Router\Http\Request;
+use Psr\Http\Message\RequestInterface;
 use dvictorjhg\braidphp\Router\Classes\Route;
 use dvictorjhg\braidphp\Router\Classes\RouteArray;
 use dvictorjhg\braidphp\Router\Classes\RouteMatch;
@@ -41,9 +41,11 @@ class Router
         }
     }
 
-    public function processRoutes(Request $request): ?RouteMatch
+    public function processRoutes(RequestInterface $request): ?RouteMatch
     {
         $requestMethod = $request->getMethod();
+        $path = $request->getUri()->getPath();
+        $pathParts = $path === '' ? [] : \explode('/', \ltrim($path, '/'));
 
         foreach (HttpMethod::cases() as $httpMethod) {
             if ($httpMethod->name === $requestMethod) {
@@ -51,7 +53,7 @@ class Router
                     $requestMethod,
                     $httpMethod->value,
                     $this->routes,
-                    $request->getUri()->getPathParts()
+                    $pathParts
                 );
             }
         }
@@ -165,12 +167,12 @@ class Router
         }
 
         $routePathPartsLength = \count($routePathParts);
-        for ($i = 0; $i < $routePathPartsLength; $i++) {
-            $isParameter = \str_starts_with($routePathParts[$i], ':');
+        for ($index = 0; $index < $routePathPartsLength; $index++) {
+            $isParameter = \str_starts_with($routePathParts[$index], ':');
             if ($isParameter) {
-                $parameterName = \substr($routePathParts[$i], 1);
-                $parameters[$parameterName] = \urldecode($pathParts[$i]);
-            } elseif ($routePathParts[$i] !== $pathParts[$i]) {
+                $parameterName = \substr($routePathParts[$index], 1);
+                $parameters[$parameterName] = \rawurldecode($pathParts[$index]);
+            } elseif ($routePathParts[$index] !== $pathParts[$index]) {
                 return null;
             }
         }

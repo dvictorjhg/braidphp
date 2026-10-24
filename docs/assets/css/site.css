@@ -443,6 +443,13 @@ a {
 
 .code-panel {
     overflow: hidden;
+    color: var(--ink);
+}
+
+.code-panel > pre,
+.http-card > pre,
+.custom-match pre {
+    background: var(--surface-strong);
 }
 
 .panel-topline {
@@ -495,9 +502,7 @@ code {
     --syntax-comment: #546560;
 }
 
-:root[data-theme="dark"] .hljs,
-.section.ink .hljs,
-.runtime-code .hljs {
+:root[data-theme="dark"] .hljs {
     --syntax-keyword: #ffae96;
     --syntax-string: #8cd8c1;
     --syntax-number: #f3d16c;
@@ -846,36 +851,21 @@ code {
     font-size: 14px;
 }
 
-.section.ink code,
-.section.ink .quickstart-label {
+.section.ink code {
     color: var(--yellow);
 }
 
 .section.ink .small-label,
-.section.ink .code-badge,
 .section.ink .runtime-step span {
     color: var(--coral-on-dark);
 }
 
-.runtime-flow .runtime-step span,
-.runtime-code .code-badge {
+.runtime-flow .runtime-step span {
     color: var(--coral-on-dark);
 }
 
-.runtime-code .quickstart-label {
-    color: var(--yellow);
-}
-
-.section.ink .routing-code .panel-topline {
-    border-color: #3c5552;
-    background: var(--ink-panel);
-}
-
-.section.ink .routing-code,
-.section.ink .custom-match pre {
-    border-color: #3c5552;
-    background: var(--ink-panel-soft);
-    color: var(--ink-panel-text);
+.section.ink pre code {
+    color: inherit;
 }
 
 .route-inspector {
@@ -1102,7 +1092,7 @@ code {
     min-height: 0;
     margin-top: 23px;
     border-top: 1px solid var(--line);
-    background: var(--paper-deep);
+    background: var(--surface-strong);
 }
 
 .response-card {
@@ -1111,7 +1101,7 @@ code {
 
 .example-output.compact {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr);
     gap: 10px;
     align-items: center;
     min-height: 61px;
@@ -1123,6 +1113,10 @@ code {
 }
 
 .example-output.compact code {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-wrap: normal;
     color: var(--ink);
     font-size: 11px;
     text-align: right;
@@ -1196,7 +1190,7 @@ code {
 }
 
 .runtime-flow {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 20px;
     border-color: #3c5552;
     background: var(--ink-panel-soft);
@@ -1230,25 +1224,9 @@ code {
     margin-top: 27px;
 }
 
-.runtime-code {
-    border-color: #3c5552;
-    background: var(--ink-panel-soft);
-    color: var(--ink-panel-text);
-}
-
-.runtime-code .panel-topline {
-    border-color: #3c5552;
-    background: var(--ink-panel);
-}
-
-.runtime-code pre code {
-    color: var(--ink-panel-text);
-}
-
 .runtime-code p {
     padding: 0 20px 20px;
     margin: 0;
-    color: var(--ink-panel-muted);
     font-size: 14px;
 }
 
@@ -1595,9 +1573,7 @@ code {
     }
 
     .example-output.compact code {
-        overflow-wrap: anywhere;
         text-align: left;
-        white-space: pre-wrap;
     }
 
     .method-list {
@@ -1663,6 +1639,7 @@ code {
     padding: 18px;
     border: 1px solid var(--line);
     background: var(--surface);
+    color: var(--ink);
     font-size: 13px;
     line-height: 1.7;
 }
@@ -1740,8 +1717,9 @@ pre,
 .doc-card pre,
 .install-block pre {
     max-width: 100%;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    overflow-x: auto;
+    white-space: pre;
+    overflow-wrap: normal;
 }
 
 code,
@@ -1751,10 +1729,6 @@ h3,
 p,
 li {
     overflow-wrap: anywhere;
-}
-
-.section.ink .routing-code pre {
-    color: var(--ink-panel-text);
 }
 
 .brand-copy,

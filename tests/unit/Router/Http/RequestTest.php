@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
 use dvictorjhg\braidphp\Router\Http\Request;
+use dvictorjhg\braidphp\Router\Http\RequestParser;
 use dvictorjhg\braidphp\Router\Http\RequestException;
 use dvictorjhg\braidphp\Router\Http\Uri;
 
@@ -39,17 +40,23 @@ final class RequestTest extends TestCase
 
         self::assertSame('Victor', $request->getQueryParams()['name']);
         self::assertSame(['php', 'ng'], $request->getQueryParams()['tag']);
-        self::assertSame([], $request->getRouteParams());
+        self::assertSame([], $request->getAttributes());
     }
 
-    public function testRouteParametersAreImmutable(): void
+    public function testRequestAttributesAreImmutable(): void
     {
         $request = new Request(method: HttpMethod::GET, uri: '/hello');
-        $routedRequest = $request->withRouteParams(['name' => 'Victor']);
+        $routedRequest = $request->withAttribute('name', 'Victor');
 
-        self::assertSame([], $request->getRouteParams());
-        self::assertSame(['name' => 'Victor'], $routedRequest->getRouteParams());
-        self::assertSame('Victor', $routedRequest->getRouteParam('name'));
+        self::assertSame([], $request->getAttributes());
+        self::assertSame(['name' => 'Victor'], $routedRequest->getAttributes());
+        self::assertSame('Victor', $routedRequest->getAttribute('name'));
+    }
+
+    public function testEncodedQueryDelimitersRemainWithinTheirValues(): void
+    {
+        $request = new Request(uri: '/?q=a%26role%3Dadmin&plus=%2B&literal=a+b', body: '');
+        self::assertSame(['q' => 'a&role=admin', 'plus' => '+', 'literal' => 'a b'], $request->getQueryParams());
     }
 
     public function testChangingUriRefreshesQueryParameters(): void
@@ -79,7 +86,7 @@ final class RequestTest extends TestCase
         \rewind($resource);
 
         try {
-            $request = Request::fromResource($resource);
+            $request = RequestParser::fromResource($resource);
         } finally {
             \fclose($resource);
         }
@@ -99,7 +106,7 @@ final class RequestTest extends TestCase
         self::assertIsResource($resource);
 
         try {
-            $request = Request::fromResource($resource);
+            $request = RequestParser::fromResource($resource);
         } finally {
             \fclose($resource);
         }
@@ -168,43 +175,107 @@ final class RequestTest extends TestCase
     {
         $request = new Request(method: HttpMethod::GET, uri: 'http://example.test/hello');
 
-        self::assertSame($request, $request->withRequestTarget('http://example.test/hello'));
-        $changedRequest = $request->withRequestTarget('/hello');
+        $changedRequest = $request->withRequestTarget('/different');
 
-        self::assertSame('http://example.test/hello', $request->getRequestTarget());
-        self::assertSame('/hello', $changedRequest->getRequestTarget());
+        self::assertSame('/hello', $request->getRequestTarget());
+        self::assertSame('/different', $changedRequest->getRequestTarget());
+        self::assertSame($changedRequest, $changedRequest->withRequestTarget('/different'));
+        self::assertSame((string) $request->getUri(), (string) $changedRequest->getUri());
+        self::assertSame('/different', $changedRequest->withUri(new Uri('https://other.test/new'))->getRequestTarget());
     }
 
-    public function testRejectsInvalidRequestTarget(): void
+    #[DataProvider('invalidRequestTargets')]
+    public function testRejectsInvalidRequestTarget(string $target): void
     {
         $request = new Request(method: HttpMethod::GET, uri: '/hello');
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid target '/invalid' for 'GET' method.");
-        $request->withRequestTarget('/invalid');
-    }
-
-    #[DataProvider('optionsTargets')]
-    public function testAcceptsOptionsTargets(string $target): void
-    {
-        $request = new Request(method: HttpMethod::OPTIONS, uri: $target);
-
-        self::assertSame('OPTIONS', $request->getMethod());
-        self::assertSame($target, $request->getRequestTarget());
+        $this->expectExceptionMessage('Invalid request target.');
+        $request->withRequestTarget($target);
     }
 
     /** @return array<string, array{string}> */
-    public static function optionsTargets(): array
+    public static function invalidRequestTargets(): array
+    {
+        return ['empty' => [''], 'space' => ['/invalid target'], 'crlf' => ["/\r\nInjected"], 'nul' => ["/\0"]];
+    }
+
+    #[DataProvider('wireTargets')]
+    public function testPreservesWireTargets(string $method, string $target): void
+    {
+        $resource = \fopen('php://temp', 'w+');
+        self::assertIsResource($resource);
+        \fwrite($resource, "$method $target HTTP/1.1\r\n\r\n");
+        \rewind($resource);
+        try {
+            $request = RequestParser::fromResource($resource);
+        } finally {
+            \fclose($resource);
+        }
+
+        self::assertInstanceOf(Request::class, $request);
+        self::assertSame($method, $request->getMethod());
+        self::assertSame($target, $request->getRequestTarget());
+    }
+
+    public function testExplicitAsteriskTargetSurvivesUriChanges(): void
+    {
+        $request = (new Request(uri: '/'))
+            ->withMethod('OPTIONS')
+            ->withRequestTarget('*')
+            ->withUri(new Uri('https://example.test/'));
+
+        self::assertSame('*', $request->getRequestTarget());
+        self::assertSame('https://example.test/', (string) $request->getUri());
+    }
+
+    public function testExplicitDefaultTargetSurvivesUriChanges(): void
+    {
+        $request = (new Request(uri: '/old'))->withRequestTarget('/old');
+        self::assertSame('/old', $request->withUri(new Uri('/new'))->getRequestTarget());
+        self::assertSame('/new?0', (new Request(uri: '/old'))->withUri(new Uri('/new?0#fragment'))->getRequestTarget());
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function wireTargets(): array
     {
         return [
-            'root' => ['/'],
-            'resource' => ['/resource?name=value'],
-            'absolute' => ['http://example.test/resource'],
-            'asterisk' => ['*'],
+            'OPTIONS root' => ['OPTIONS', '/'],
+            'OPTIONS resource' => ['OPTIONS', '/resource?name=value'],
+            'OPTIONS absolute' => ['OPTIONS', 'http://example.test/resource'],
+            'OPTIONS asterisk' => ['OPTIONS', '*'],
+            'GET absolute' => ['GET', 'https://example.test/resource'],
+            'GET zero query' => ['GET', '/resource?0'],
+            'CONNECT authority' => ['CONNECT', 'example.test:443'],
         ];
     }
 
-    public function testChangesMethodImmutablyAndRejectsUnsupportedMethods(): void
+    #[DataProvider('invalidWireTargets')]
+    public function testRejectsInvalidWireTargets(string $method, string $target): void
+    {
+        $resource = \fopen('php://temp', 'w+');
+        self::assertIsResource($resource);
+        \fwrite($resource, "$method $target HTTP/1.1\r\n\r\n");
+        \rewind($resource);
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            RequestParser::fromResource($resource);
+        } finally {
+            \fclose($resource);
+        }
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function invalidWireTargets(): array
+    {
+        return [
+            'fragment' => ['GET', '/resource#fragment'],
+            'CONNECT origin' => ['CONNECT', '/resource'],
+            'empty' => ['GET', ''],
+        ];
+    }
+
+    public function testChangesMethodImmutablyAndRejectsInvalidMethods(): void
     {
         $request = new Request(method: HttpMethod::GET, uri: '/hello');
 
@@ -212,10 +283,11 @@ final class RequestTest extends TestCase
         $changedRequest = $request->withMethod('POST');
         self::assertSame('GET', $request->getMethod());
         self::assertSame('POST', $changedRequest->getMethod());
+        self::assertSame('PROPFIND', $request->withMethod('PROPFIND')->getMethod());
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unsupported method given (INVALID).');
-        $request->withMethod('INVALID');
+        $this->expectExceptionMessage('Invalid HTTP method token.');
+        $request->withMethod("GET\r\nInjected");
     }
 
     public function testUpdatesHostHeaderWhenUriChanges(): void
@@ -249,6 +321,42 @@ final class RequestTest extends TestCase
         );
 
         self::assertSame(['example.test:8080'], $request->getHeader('Host'));
+    }
+
+    #[DataProvider('hostUpdates')]
+    public function testUriHostUpdatesRespectMissingEmptyAndPreservedHeaders(
+        ?string $host,
+        string $uri,
+        bool $preserveHost,
+        string $expected
+    ): void {
+        $request = new Request(uri: '/', headers: $host === null ? [] : ['Host' => $host], serverParams: []);
+        $changedRequest = $request->withUri(new Uri($uri), $preserveHost);
+
+        self::assertSame($expected, $changedRequest->getHeaderLine('Host'));
+        self::assertSame($host ?? '', $request->getHeaderLine('Host'));
+    }
+
+    /** @return array<string, array{string|null, string, bool, string}> */
+    public static function hostUpdates(): array
+    {
+        return [
+            'missing preserved' => [null, 'https://example.test:8443/', true, 'example.test:8443'],
+            'empty preserved' => ['', 'https://example.test/', true, 'example.test'],
+            'nonempty preserved' => ['original.test', 'https://example.test/', true, 'original.test'],
+            'nonempty replaced' => ['original.test', 'https://example.test/', false, 'example.test'],
+            'relative preserves existing' => ['original.test', '/new', false, 'original.test'],
+            'relative keeps missing' => [null, '/new', true, ''],
+        ];
+    }
+
+    public function testSameUriStillInitializesMissingHostHeader(): void
+    {
+        $request = (new Request(uri: 'https://example.test/', serverParams: []))->withoutHeader('Host');
+        $changedRequest = $request->withUri($request->getUri(), true);
+
+        self::assertSame('example.test', $changedRequest->getHeaderLine('Host'));
+        self::assertFalse($request->hasHeader('Host'));
     }
 
     #[RunInSeparateProcess]
@@ -291,8 +399,7 @@ final class RequestTest extends TestCase
     {
         $request = new Request(method: HttpMethod::GET, uri: '/', body: '');
 
-        self::assertNull($request->getRouteParam('missing'));
-        self::assertSame($request, $request->withRouteParams([]));
+        self::assertNull($request->getAttribute('missing'));
     }
 
     private function invalidHeaderValue(): mixed

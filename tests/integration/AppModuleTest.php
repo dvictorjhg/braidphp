@@ -7,7 +7,6 @@ namespace dvictorjhg\braidphp\tests\integration;
 use PHPUnit\Framework\TestCase;
 use Zalas\PHPUnit\Globals\Attribute\Server;
 use dvictorjhg\braidphp\Core\App;
-use dvictorjhg\braidphp\Router\Http\HttpMethod;
 use dvictorjhg\braidphp\tests\Mock\AppModule;
 
 class AppModuleTest extends TestCase

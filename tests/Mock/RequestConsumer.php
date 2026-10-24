@@ -5,7 +5,7 @@ namespace dvictorjhg\braidphp\tests\Mock;
 use Psr\Http\Message\StreamInterface;
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
 use dvictorjhg\braidphp\Router\Http\Request;
-use dvictorjhg\braidphp\Router\Http\Stream;
+use dvictorjhg\braidphp\Router\Http\StreamFactory;
 use dvictorjhg\braidphp\Router\Attributes\Get;
 use dvictorjhg\braidphp\Router\Attributes\Route;
 
@@ -38,6 +38,6 @@ class RequestConsumer
     private function getHttpMethodName(): StreamInterface
     {
         $httpMethod = $this->request->getMethod();
-        return Stream::of($httpMethod);
+        return StreamFactory::create($httpMethod);
     }
 }

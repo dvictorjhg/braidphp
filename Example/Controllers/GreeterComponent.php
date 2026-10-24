@@ -24,15 +24,15 @@ class GreeterComponent
     )]
     public function hi(Request $req): string
     {
-        $name = $req->getRouteParam('name') ?? '';
-        return "Hi $name!";
+        $name = $req->getAttribute('name');
+        return 'Hi ' . (\is_string($name) ? $name : '') . '!';
     }
 
     #[Get('/hello/:name')]
     public function greet(Request $req): string
     {
-        $name = $req->getRouteParam('name') ?? '';
-        return $this->greeterProvider->getGreeting($name);
+        $name = $req->getAttribute('name');
+        return $this->greeterProvider->getGreeting(\is_string($name) ? $name : '');
     }
 
     #[Get('/hello')]

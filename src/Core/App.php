@@ -6,30 +6,37 @@ namespace dvictorjhg\braidphp\Core;
 
 use PHPInjector\Container\Container;
 use PHPInjector\DI\Injector;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LoggerInterface;
 use dvictorjhg\braidphp\Core\Attributes\Module;
 use dvictorjhg\braidphp\Core\Scanners\ModuleScanner;
 use dvictorjhg\braidphp\Router\Http\HttpOptions;
-use dvictorjhg\braidphp\Router\Http\Request;
+use dvictorjhg\braidphp\Router\Http\RequestParser;
+use dvictorjhg\braidphp\Router\Http\ResponseEmitter;
 use dvictorjhg\braidphp\Router\Http\Response;
 use dvictorjhg\braidphp\Router\Classes\RouteMatch;
 use dvictorjhg\braidphp\Router\RouteScanner;
 use dvictorjhg\braidphp\Router\Router;
 
-use function PHPInjector\DI\inject;
-
-class App
+class App implements RequestHandlerInterface
 {
-    private ?Injector $injector = null;
+    /** @var list<MiddlewareInterface> */
+    private array $middleware = [];
 
     /**
      * @param array<class-string|int|string, mixed>|Container<mixed> $providers
      */
     public function __construct(
         array|Container $providers = [],
-        private readonly HttpOptions $httpOptions = new HttpOptions()
+        private readonly HttpOptions $httpOptions = new HttpOptions(),
+        private readonly LoggerInterface $logger = new \dvictorjhg\braidphp\Core\ErrorLogLogger()
     ) {
         if (!empty($providers)) {
-            $this->injector = new Injector($providers);
+            new Injector($providers);
         }
     }
 
@@ -100,34 +107,68 @@ class App
         $response = null;
         try {
             try {
-                $request = Request::fromResource($client, $this->httpOptions);
+                $request = RequestParser::fromResource($client, $this->httpOptions);
             } catch (\InvalidArgumentException $exception) {
-                \error_log('Request error: ' . $exception);
+                $this->logError('Request error', $exception);
                 $response = new Response(400, [], 'Bad Request');
                 return;
             }
             if ($request !== null) {
-                $response = $this->handleRequest($request);
+                $response = $this->handle($request);
             }
         } catch (\Throwable $exception) {
-            \error_log('Application error: ' . $exception);
+            $this->logError('Application error', $exception);
             $response = new Response(500, [], 'Internal Server Error');
         } finally {
             try {
-                if ($response instanceof Response) {
-                    $this->writeResponse($client, $response);
+                if ($response instanceof ResponseInterface) {
+                    ResponseEmitter::write($client, $response, $this->httpOptions);
                 }
             } catch (\Throwable $exception) {
-                \error_log('Response write error: ' . $exception);
+                $this->logError('Response write error', $exception);
             } finally {
                 \fclose($client);
             }
         }
     }
 
-    public function handleRequest(Request $request): Response
+    private function logError(string $message, \Throwable $exception): void
     {
-        $router = $this->inject(Router::class);
+        try {
+            $this->logger->error($message, ['exception' => $exception]);
+        } catch (\Throwable) {
+            \error_log($message . ': ' . $exception);
+        }
+    }
+
+    public function addMiddleware(MiddlewareInterface $middleware): self
+    {
+        $this->middleware[] = $middleware;
+        return $this;
+    }
+
+    #[\Override]
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        $handler = new class ($this->dispatch(...)) implements RequestHandlerInterface {
+            /** @param \Closure(ServerRequestInterface): ResponseInterface $dispatch */
+            public function __construct(private readonly \Closure $dispatch)
+            {
+            }
+
+            #[\Override]
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return ($this->dispatch)($request);
+            }
+        };
+
+        return (new MiddlewarePipeline($this->middleware, $handler))->handle($request);
+    }
+
+    private function dispatch(ServerRequestInterface $request): ResponseInterface
+    {
+        $router = Injector::inject(Router::class);
         if (!$router instanceof Router) {
             throw new AppException('Router not found');
         }
@@ -135,28 +176,19 @@ class App
         $matchedRoute = $router->processRoutes($request);
 
         if ($matchedRoute instanceof RouteMatch && $matchedRoute->route->action !== null) {
-            $request = $request->withRouteParams($matchedRoute->params);
-            $result = $this->inject($matchedRoute->route->action, [$request::class => $request]);
+            foreach ($matchedRoute->params as $name => $value) {
+                $request = $request->withAttribute($name, $value);
+            }
+            $result = Injector::inject($matchedRoute->route->action, [
+                $request::class => $request,
+                RequestInterface::class => $request,
+                ServerRequestInterface::class => $request
+            ]);
 
-            return $result instanceof Response ? $result : $this->responseFromResult($result);
+            return $result instanceof ResponseInterface ? $result : $this->responseFromResult($result);
         }
 
         return new Response(404, [], 'Not Found');
-    }
-
-    /**
-     * Resolve through this app's configured injector when one exists.
-     *
-     * @param array<int|string, mixed>|callable|object|string $target
-     * @param array<int|string, mixed> $args
-     */
-    private function inject(array|callable|object|string $target, array $args = []): mixed
-    {
-        if ($this->injector instanceof Injector) {
-            return Injector::inject($target, $args);
-        }
-
-        return inject($target, $args);
     }
 
     private function responseFromResult(mixed $result): Response
@@ -166,35 +198,6 @@ class App
         }
 
         throw new AppException('Route action returned an unsupported result type: ' . \get_debug_type($result));
-    }
-
-    /**
-     * @param resource $client
-     * @param Response $response
-     */
-    private function writeResponse($client, Response $response): void
-    {
-        $payload = (string) $response;
-        $offset = 0;
-        $length = \strlen($payload);
-        $deadline = \microtime(true) + $this->httpOptions->writeTimeout;
-        $socket = \str_contains(\stream_get_meta_data($client)['stream_type'], 'socket');
-
-        while ($offset < $length) {
-            $remaining = $deadline - \microtime(true);
-            if ($remaining <= 0) {
-                throw new AppException('Response write timed out.');
-            }
-            if ($socket) {
-                $seconds = (int) $remaining;
-                \stream_set_timeout($client, $seconds, (int) (($remaining - $seconds) * 1_000_000));
-            }
-            $written = @\fwrite($client, \substr($payload, $offset, 8192));
-            if ($written === false || $written === 0) {
-                throw new AppException('Failed to write response to client.');
-            }
-            $offset += $written;
-        }
     }
 
     /** @param Container<mixed> $imports */
@@ -214,14 +217,14 @@ class App
     private function processProviders(Container $providers): void
     {
         if (\count($providers) > 0) {
-            $this->injector = new Injector($providers);
+            new Injector($providers);
         }
     }
 
     /** @param Container<mixed> $controllers */
     private function processControllers(Container $controllers): void
     {
-        $router = $this->inject(Router::class);
+        $router = Injector::inject(Router::class);
 
         if ($router instanceof Router) {
             foreach ($controllers as $controller) {
@@ -254,7 +257,7 @@ class App
 
             $args = \is_array($object) ? $object : [];
 
-            $instance = $this->inject($className, $args);
+            $instance = Injector::inject($className, $args);
             if ($instance === null) {
                 throw new AppException("Callback failed for [$className].");
             }

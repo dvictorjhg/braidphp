@@ -15,7 +15,7 @@ the Apache-2.0 license in this repository.
 - Do not use this repository to generate misleading clones, spam packages, or low-quality output that removes provenance.
 - Do not remove attribution from generated output that substantially reproduces code or documentation from this project.
 - If AI tools are used to build on top of BraidPHP, keep the lineage clear and preserve the original notices required by the Apache-2.0 license.
-- Review generated code for security, correctness, licensing, and compatibility with PHP `^8.4` before publishing it.
+- Review generated code for security, correctness, licensing, and compatibility with PHP `~8.4.27 || ^8.5.12` before publishing it.
 
 ## Important Legal Note
 

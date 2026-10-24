@@ -9,8 +9,15 @@ use PHPInjector\DI\Injector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LoggerInterface;
 use dvictorjhg\braidphp\Core\App;
 use dvictorjhg\braidphp\Core\AppException;
+use dvictorjhg\braidphp\Core\MiddlewarePipeline;
 use dvictorjhg\braidphp\Core\Attributes\Module;
 use dvictorjhg\braidphp\Router\Classes\Route;
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
@@ -20,14 +27,232 @@ use dvictorjhg\braidphp\Router\Http\Response;
 use dvictorjhg\braidphp\Router\HttpModule;
 use dvictorjhg\braidphp\Router\Router;
 use dvictorjhg\braidphp\tests\Mock\ControllerWithRoutes;
-use dvictorjhg\braidphp\tests\Mock\ShortWriteStream;
 
 #[CoversClass(App::class)]
+#[CoversClass(MiddlewarePipeline::class)]
 final class AppTest extends TestCase
 {
-    public function testHandleRequestPassesRouteParametersToAction(): void
+    public function testListenerReportsExceptionsThroughPsrLogger(): void
     {
-        new App([Router::class]);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Request error',
+            self::callback(static function (array $context): bool {
+                return $context['exception'] instanceof \InvalidArgumentException;
+            })
+        );
+        $response = $this->exchange(new App(logger: $logger), "POST / HTTP/1.1\r\nContent-Length: nope\r\n\r\n");
+        self::assertStringStartsWith('HTTP/1.1 400 Bad Request', $response);
+    }
+
+    public function testBrokenLoggerCannotPreventSanitizedListenerResponse(): void
+    {
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willThrowException(new AppException('logging backend failed'));
+        $log = '';
+        $response = $this->exchange(new App(logger: $logger), "POST / HTTP/1.1\r\nContent-Length: nope\r\n\r\n", $log);
+        self::assertStringStartsWith('HTTP/1.1 400 Bad Request', $response);
+        self::assertStringContainsString('Request error:', $log);
+        self::assertStringNotContainsString('logging backend failed', $response);
+    }
+
+    public function testMiddlewareOrderAndRequestChangesAcrossRepeatedRequests(): void
+    {
+        $events = [];
+        $app = new App([Router::class => new Router()]);
+        $router = Injector::inject(Router::class);
+        self::assertInstanceOf(Router::class, $router);
+        $router->setRoutes(new Route(
+            httpMethod: HttpMethod::GET,
+            path: '/hello/:name',
+            action: [self::class, 'showServerRequest']
+        ));
+        foreach (['outer', 'inner'] as $name) {
+            self::assertSame($app, $app->addMiddleware($this->middleware(
+                static function (
+                    ServerRequestInterface $request,
+                    RequestHandlerInterface $handler
+                ) use (
+                    &$events,
+                    $name
+                ): ResponseInterface {
+                    $events[] = "$name before";
+                    $response = $handler->handle($request->withAttribute('user', 'Ada'));
+                    $events[] = "$name after";
+                    return $response->withAddedHeader('X-Middleware', $name);
+                }
+            )));
+        }
+
+        $request = new Request(uri: '/hello/Victor', body: '');
+        for ($iteration = 0; $iteration < 2; ++$iteration) {
+            $response = $app->handle($request);
+            self::assertSame('Victor:Ada', (string) $response->getBody());
+            self::assertSame(['inner', 'outer'], $response->getHeader('X-Middleware'));
+        }
+        self::assertSame(\array_merge(
+            ['outer before', 'inner before', 'inner after', 'outer after'],
+            ['outer before', 'inner before', 'inner after', 'outer after']
+        ), $events);
+        self::assertSame([], $request->getAttributes());
+    }
+
+    public static function showServerRequest(ServerRequestInterface $request): string
+    {
+        $name = $request->getAttribute('name');
+        $user = $request->getAttribute('user');
+        self::assertIsString($name);
+        self::assertIsString($user);
+        return $name . ':' . $user;
+    }
+
+    public function testMiddlewareCanShortCircuitBeforeRouterResolution(): void
+    {
+        $expected = new Response(401, [], 'Unauthorized');
+        $app = new App([Router::class => null]);
+        $app->addMiddleware($this->middleware(
+            static fn (): ResponseInterface => $expected
+        ));
+        $app->addMiddleware($this->middleware(static function (): never {
+            self::fail('Later middleware must not execute after a short circuit.');
+        }));
+
+        self::assertSame($expected, $app->handle(new Request(body: '')));
+        self::assertStringStartsWith('HTTP/1.1 401 Unauthorized', $this->exchange($app, "GET / HTTP/1.1\r\n\r\n"));
+    }
+
+    public function testDownstreamHandlerCanBeInvokedMoreThanOnce(): void
+    {
+        $calls = 0;
+        $app = new App([Router::class => new Router()]);
+        $app->addMiddleware($this->middleware(
+            static function (ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
+                $handler->handle($request);
+                return $handler->handle($request);
+            }
+        ));
+        $app->addMiddleware($this->middleware(
+            static function (
+                ServerRequestInterface $request,
+                RequestHandlerInterface $handler
+            ) use (
+                &$calls
+            ): ResponseInterface {
+                ++$calls;
+                return $handler->handle($request);
+            }
+        ));
+
+        self::assertSame(404, $app->handle(new Request(body: ''))->getStatusCode());
+        self::assertSame(2, $calls);
+    }
+
+    public function testOuterMiddlewareCanConvertDispatchExceptionsToResponses(): void
+    {
+        $app = new App([Router::class => null]);
+        $app->addMiddleware($this->middleware(
+            static function (ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
+                try {
+                    return $handler->handle($request);
+                } catch (AppException) {
+                    return new Response(503, [], 'Unavailable');
+                }
+            }
+        ));
+
+        self::assertSame(503, $app->handle(new Request(body: ''))->getStatusCode());
+    }
+
+    public function testListenerSanitizesUncaughtMiddlewareExceptions(): void
+    {
+        $app = new App();
+        $app->addMiddleware($this->middleware(static function (): never {
+            throw new AppException('private middleware details');
+        }));
+        $log = '';
+        $response = $this->exchange($app, "GET / HTTP/1.1\r\n\r\n", $log);
+        self::assertStringStartsWith('HTTP/1.1 500 Internal Server Error', $response);
+        self::assertStringNotContainsString('private middleware details', $response);
+        self::assertStringContainsString('private middleware details', $log);
+    }
+
+    public function testHandlesForeignServerRequestsAndRouteActionResponses(): void
+    {
+        $app = new App([Router::class => new Router()]);
+        $router = Injector::inject(Router::class);
+        self::assertInstanceOf(Router::class, $router);
+        $router->setRoutes(new Route(
+            httpMethod: HttpMethod::GET,
+            path: '/hello/:name',
+            action: [self::class, 'showServerRequest']
+        ));
+        $uri = $this->createStub(UriInterface::class);
+        $uri->method('getPath')->willReturn('/hello/Victor');
+        $request = $this->createMock(ServerRequestInterface::class);
+        $request->method('getMethod')->willReturn('GET');
+        $request->method('getUri')->willReturn($uri);
+        $request->expects(self::once())->method('withAttribute')->with('name', 'Victor')->willReturnSelf();
+        $request->method('getAttribute')->willReturnMap([['name', null, 'Victor'], ['user', null, 'Ada']]);
+
+        self::assertSame('Victor:Ada', (string) $app->handle($request)->getBody());
+
+        $response = $this->createStub(ResponseInterface::class);
+        $router->setRoutes(new Route(
+            httpMethod: HttpMethod::GET,
+            path: '/foreign',
+            action: [self::class, 'foreignResponse']
+        ));
+        self::assertSame($response, $app->handle(
+            (new Request(uri: '/foreign', body: ''))->withAttribute('response', $response)
+        ));
+    }
+
+    public static function foreignResponse(ServerRequestInterface $request): ResponseInterface
+    {
+        $response = $request->getAttribute('response');
+        self::assertInstanceOf(ResponseInterface::class, $response);
+        return $response;
+    }
+
+    public function testHandlerAndListenerPreserveForeignMiddlewareResponses(): void
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(202);
+        $response->method('getHeaders')->willReturn(['X-Test' => ['yes']]);
+        $response->method('getBody')->willReturn((new Response(body: 'foreign'))->getBody());
+        $response->method('getProtocolVersion')->willReturn('1.0');
+        $response->method('getReasonPhrase')->willReturn('Custom');
+        $app = new App();
+        $app->addMiddleware($this->middleware(static fn (): ResponseInterface => $response));
+
+        self::assertSame($response, $app->handle(new Request(body: '')));
+        $wire = $this->exchange($app, "GET / HTTP/1.1\r\n\r\n");
+        self::assertStringStartsWith('HTTP/1.0 202 Custom', $wire);
+        self::assertStringContainsString("X-Test: yes\r\n", $wire);
+        self::assertStringEndsWith('foreign', $wire);
+    }
+
+    /** @param \Closure(ServerRequestInterface, RequestHandlerInterface): ResponseInterface $process */
+    private function middleware(\Closure $process): MiddlewareInterface
+    {
+        return new class ($process) implements MiddlewareInterface {
+            /** @param \Closure(ServerRequestInterface, RequestHandlerInterface): ResponseInterface $process */
+            public function __construct(private readonly \Closure $process)
+            {
+            }
+
+            public function process(
+                ServerRequestInterface $request,
+                RequestHandlerInterface $handler
+            ): ResponseInterface {
+                return ($this->process)($request, $handler);
+            }
+        };
+    }
+
+    public function testHandlerPassesRouteParametersToAction(): void
+    {
+        self::assertInstanceOf(App::class, new App([Router::class]));
         $router = Injector::inject(Router::class);
         self::assertInstanceOf(Router::class, $router);
 
@@ -37,7 +262,7 @@ final class AppTest extends TestCase
             action: [self::class, 'show']
         ));
 
-        $response = (new App())->handleRequest(
+        $response = (new App())->handle(
             new Request(method: HttpMethod::GET, uri: '/hello/Victor')
         );
 
@@ -46,7 +271,9 @@ final class AppTest extends TestCase
 
     public static function show(Request $request): string
     {
-        return $request->getRouteParam('name') ?? '';
+        $name = $request->getAttribute('name');
+        self::assertIsString($name);
+        return $name;
     }
 
     public function testRejectsObjectWithoutModuleAttribute(): void
@@ -129,13 +356,13 @@ final class AppTest extends TestCase
         $this->expectException(AppException::class);
         $this->expectExceptionMessage('Router not found');
 
-        $app->handleRequest(new Request(method: HttpMethod::GET, uri: '/', body: ''));
+        $app->handle(new Request(method: HttpMethod::GET, uri: '/', body: ''));
     }
 
     public function testReturnsNotFoundWhenNoRouteMatches(): void
     {
         $app = new App([Router::class => new Router()]);
-        $response = $app->handleRequest(new Request(method: HttpMethod::GET, uri: '/', body: ''));
+        $response = $app->handle(new Request(method: HttpMethod::GET, uri: '/', body: ''));
 
         self::assertSame(404, $response->getStatusCode());
         self::assertSame('Not Found', (string) $response->getBody());
@@ -148,21 +375,6 @@ final class AppTest extends TestCase
         $this->expectException(AppException::class);
         $this->expectExceptionMessage('Route action returned an unsupported result type: array');
         $method->invoke(new App(), []);
-    }
-
-    public function testWritesResponseToClientResource(): void
-    {
-        $client = \fopen('php://temp', 'w+');
-        self::assertIsResource($client);
-        $method = new \ReflectionMethod(App::class, 'writeResponse');
-
-        try {
-            $method->invoke(new App(), $client, new Response(body: 'body'));
-            \rewind($client);
-            self::assertStringContainsString('body', \stream_get_contents($client));
-        } finally {
-            \fclose($client);
-        }
     }
 
     #[RunInSeparateProcess]
@@ -222,74 +434,12 @@ final class AppTest extends TestCase
         }
     }
 
-    public function testRejectsExpiredResponseWriteDeadline(): void
-    {
-        $client = \fopen('php://temp', 'w+');
-        self::assertIsResource($client);
-        $this->expectException(AppException::class);
-        $this->expectExceptionMessage('Response write timed out.');
-
-        try {
-            (new \ReflectionMethod(App::class, 'writeResponse'))->invoke(
-                new App(httpOptions: new HttpOptions(writeTimeout: PHP_FLOAT_MIN)),
-                $client,
-                new Response()
-            );
-        } finally {
-            \fclose($client);
-        }
-    }
-
     public function testRejectsUnbindableListenAddress(): void
     {
         $this->expectException(AppException::class);
         $this->expectExceptionMessage('Unable to create socket server:');
 
         (new App())->listen('invalid.invalid', '1');
-    }
-
-    public function testCompletesShortResponseWrites(): void
-    {
-        $response = new Response(body: \str_repeat('body', 4096));
-        $client = $this->shortWriteClient();
-        try {
-            (new \ReflectionMethod(App::class, 'writeResponse'))->invoke(new App(), $client, $response);
-            self::assertSame((string) $response, ShortWriteStream::$written);
-        } finally {
-            \fclose($client);
-            \stream_wrapper_unregister('shortwrite');
-        }
-    }
-
-    public function testRejectsStalledResponseWrites(): void
-    {
-        $client = $this->shortWriteClient();
-        ShortWriteStream::$stall = true;
-        $this->expectException(AppException::class);
-        $this->expectExceptionMessage('Failed to write response to client.');
-        try {
-            (new \ReflectionMethod(App::class, 'writeResponse'))->invoke(new App(), $client, new Response());
-        } finally {
-            \fclose($client);
-            \stream_wrapper_unregister('shortwrite');
-        }
-    }
-
-    public function testSocketWriteDoesNotWaitForeverForSlowReader(): void
-    {
-        $sockets = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-        self::assertIsArray($sockets);
-        $this->expectException(AppException::class);
-        try {
-            (new \ReflectionMethod(App::class, 'writeResponse'))->invoke(
-                new App(httpOptions: new HttpOptions(writeTimeout: 0.02)),
-                $sockets[0],
-                new Response(body: \str_repeat('a', 8_388_608))
-            );
-        } finally {
-            \fclose($sockets[0]);
-            \fclose($sockets[1]);
-        }
     }
 
     public function testMalformedRequestGetsBadRequestAndIsLogged(): void
@@ -311,7 +461,7 @@ final class AppTest extends TestCase
     public function testApplicationFailureIsSanitizedAndLogged(): void
     {
         $app = new class extends App {
-            public function handleRequest(Request $request): Response
+            public function handle(ServerRequestInterface $request): ResponseInterface
             {
                 throw new \InvalidArgumentException('private application details');
             }
@@ -338,7 +488,7 @@ final class AppTest extends TestCase
     public function testDisconnectedClientIsLoggedWithoutEscapingHandler(): void
     {
         $app = new class extends App {
-            public function handleRequest(Request $request): Response
+            public function handle(ServerRequestInterface $request): ResponseInterface
             {
                 return new Response();
             }
@@ -358,18 +508,6 @@ final class AppTest extends TestCase
                 \fclose($sockets[0]);
             }
         }
-    }
-
-    /** @return resource */
-    private function shortWriteClient(): mixed
-    {
-        ShortWriteStream::$written = '';
-        ShortWriteStream::$stall = false;
-        ShortWriteStream::$pause = false;
-        self::assertTrue(\stream_wrapper_register('shortwrite', ShortWriteStream::class));
-        $client = \fopen('shortwrite://response', 'w');
-        self::assertIsResource($client);
-        return $client;
     }
 
     private function exchange(App $app, string $request, string &$log = ''): string

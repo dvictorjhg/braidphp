@@ -4,6 +4,8 @@ namespace dvictorjhg\braidphp\Router\Http;
 
 final class RequestParser
 {
+    private const int READ_CHUNK_BYTES = 8192;
+
     /**
      * @param resource $resource
      */
@@ -31,7 +33,7 @@ final class RequestParser
 
         $remaining = self::contentLength($request, $options->maxBodyBytes);
         while ($remaining > 0) {
-            $chunk = self::readChunk($resource, \min(8192, $remaining), $deadline);
+            $chunk = self::readChunk($resource, \min(self::READ_CHUNK_BYTES, $remaining), $deadline);
             if ($chunk === false || $chunk === '') {
                 throw new \InvalidArgumentException('Request body is shorter than Content-Length.');
             }
@@ -154,10 +156,6 @@ final class RequestParser
 
         $headerArray = [];
         foreach ($headerLines as $header) {
-            if ($header === '') {
-                continue;
-            }
-
             $headerParts = \explode(':', $header, 2);
             if (\count($headerParts) !== 2) {
                 throw new \InvalidArgumentException('The raw request contains an invalid header.');
@@ -167,6 +165,17 @@ final class RequestParser
             $headerArray[$name] = \ltrim($value);
         }
 
-        return new Request($protocolParts[1], $method, $uri, $headerArray, $body);
+        $request = new Request($protocolParts[1], $method, $uri, $headerArray, $body);
+        $parsedUri = $request->getUri();
+        $query = $parsedUri->getQuery();
+        $originForm = $parsedUri->getPath() . ($query === '' ? '' : '?' . $query);
+        $absoluteForm = $parsedUri->getScheme() . '://' . $parsedUri->getAuthority() . $originForm;
+        $validTarget = $method === 'CONNECT'
+            ? $uri === $parsedUri->getAuthority()
+            : $uri === $originForm || $uri === $absoluteForm || ($method === 'OPTIONS' && $uri === '*');
+        if (!$validTarget) {
+            throw new \InvalidArgumentException('Invalid request target for the HTTP method.');
+        }
+        return $request->withRequestTarget($uri);
     }
 }

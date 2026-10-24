@@ -5,9 +5,18 @@ Compare [BraidPHP](https://github.com/dvictorjhg/braidphp) with
 two small HTTP frameworks. Laravel and Symfony full-stack applications are not
 scope-equivalent peers. Plain PHP provides a server/runtime baseline.
 
+The published report is a dated source snapshot, not a continuously current
+performance claim. Its provenance and later source changes are identified in
+[REPORT.md](REPORT.md); rerun after source or dependency changes.
+
+The recorded 1.2.0 matrix and router snapshot were refreshed after the
+API/ownership cleanup. The report links the four complete datasets and records
+54 source and executable harness hashes. Short smoke runs verify correctness
+only; rerun the full matrix after changing measured source or dependencies.
+
 ## Requirements And Run
 
-Linux with readable `/proc`, PHP 8.4+ with CLI OPcache, Composer, and
+Linux with readable `/proc`, PHP 8.4.27+ or 8.5.12+ with CLI OPcache, Composer, and
 [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/).
 Benchmark dependencies are isolated and their lock file is tracked; they never
 enter BraidPHP's runtime dependency graph. A Composer path repository links the
@@ -22,6 +31,7 @@ k6 version
 composer --working-dir=benchmarks outdated --all --strict
 composer --working-dir=benchmarks audit --locked
 php benchmarks/run.php --self-test
+php benchmarks/features.php --self-test
 env XDEBUG_MODE=off php benchmarks/run.php
 ```
 
@@ -48,7 +58,7 @@ are loopback-only and shut down after each target. Do not run it on a busy host.
 For the shorter configuration used in the recorded report:
 
 ```fish
-env XDEBUG_MODE=off DURATION=5s REPEATS=3 VUS=1,16 SERVER_CPU=2 LOAD_CPUS=4-7 php benchmarks/run.php
+env XDEBUG_MODE=off DURATION=5s REPEATS=3 VUS=16 SERVER_CPU=2 LOAD_CPUS=4-7 php benchmarks/run.php
 ```
 
 `SERVER_CPU` and `LOAD_CPUS` are optional Linux `taskset`
@@ -62,6 +72,11 @@ larger route table, add `ROUTE_COUNT=100 VUS=16` to the environment. For example
 ```fish
 env XDEBUG_MODE=off DURATION=5s REPEATS=3 VUS=16 ROUTE_COUNT=100 SERVER_CPU=2 LOAD_CPUS=4-7 php benchmarks/run.php
 ```
+
+`BENCH_PROFILE` defaults to `bare`. Repeat both route-count configurations with
+`BENCH_PROFILE=features` for the matched middleware/service workload. The release
+matrix uses 16 VUs, three five-second repeats, and both profiles at 3 and 100
+routes: 240 measured samples, approximately 25 minutes in total.
 
 ## What Is Compared
 
@@ -100,13 +115,38 @@ JSON is encoded per request, not pre-encoded. The 404 response is deliberately
 normalized across frameworks, with Slim's normal exception/error-middleware
 dispatch retained. Flight receives a stable front-controller `SCRIPT_NAME` so
 PHP's development router does not mistake nested paths for a base directory.
-All targets are bare applications: no DB, templates, authentication, external
-I/O, additional middleware, optional route caches, or injected service graph.
-BraidPHP still uses its normal controller resolution path.
+The `bare` profile has no DB, templates, authentication, external I/O, additional
+middleware, enabled route caches, or injected service graph. BraidPHP still uses
+its normal controller resolution path.
+
+The `features` profile keeps those same routes, bodies, and status codes. Every
+target loads Composer and resolves the same registered two-class PHPInjector
+service graph, adds request context, and returns `X-Benchmark-Feature:
+service:enabled`. BraidPHP and Slim run the same two PSR-15 middleware objects;
+Slim's reversed registration order preserves the same execution order. Flight
+uses its native pre-dispatch hook and response-emission filter; plain PHP uses
+equivalent direct operations. Flight and PHP are not presented as PSR-15 engines.
+The baseline therefore includes Composer/PHPInjector only in this profile.
+Native BraidPHP retains its once-per-process bootstrap and provider reuse, so it
+remains a separate lifecycle comparison.
+
+Full feature coverage is split deliberately: HTTP tests cover modules,
+attribute controllers, routing, service resolution, middleware, request
+attributes, responses, and native parsing/emission. The PHPUnit contract suite
+covers all six factories, streams, uploads and file movement, server-request
+state, logger injection/fallback, and failure paths. Run `composer test:coverage`
+and `composer coverage:check` from the project root before a release. Disk I/O
+and failing-request logging are not silently added to only one framework's
+throughput workload; these results do not measure their performance.
 
 ## Measurement
 
-- k6 constant-VU closed-loop load, 1 and 16 VUs, with no think time.
+The runners load one-class fixture files from `fixtures/`; shared response
+payloads and media types live in `payloads.php`. Metadata fingerprints every
+runtime PHP source and all ten executable harness/fixture files, including
+`features.php`, so source changes remain distinguishable from recorded results.
+
+- k6 constant-VU closed-loop load, 16 VUs in the current report, with no think time.
 - One server at a time; target order rotates between rounds. This reduces, but
   does not eliminate, order/temperature bias. Concurrency/workload order is fixed.
 - Plain HTTP over loopback, one new connection per request for every target.
@@ -114,12 +154,12 @@ BraidPHP still uses its normal controller resolution path.
   equivalently. No TLS, proxy, gzip, or network traversal is measured.
 - Xdebug mode is off, CLI OPcache is on, timestamp validation and JIT are off.
   The runtime settings, CPU/OS, PHP/k6/Composer versions, k6 binary SHA-256,
-  dependency versions, source hashes, working-tree status, and target order are
+  dependency versions, profile, source and harness hashes, working-tree status, and target order are
   retained in `metadata.json`.
 - All frameworks load through one optimized Composer autoloader, with BraidPHP
   linked from the checkout rather than fetched from a release. The baseline
-  does not load Composer. Root development autoloaders are not used.
-- Status, exact response body, and media type are checked on every request.
+  does not load Composer in the bare profile. Root development autoloaders are not used.
+- Status, exact response body, media type, and profile-specific feature header are checked on every request.
   Expected 404s are successes; every other unexpected status is a failure.
 - Results show median requests/second and median per-run p95/p99 HTTP duration.
   Percentiles are **not** pooled percentiles. k6 HTTP duration excludes connection
@@ -155,8 +195,9 @@ it exits, so k6 launch/exit idle intervals are included in its duration.
 - RSS includes PHP, extensions, and resident shared pages, not only framework
   allocations. It is not private memory, PHP heap size, or an allocation profile.
 - One server is reused across all workloads/concurrency levels within a round.
-  RSS can retain state from earlier requests. Different route-count datasets have
-  different preceding workloads; their RSS values do not isolate route-table cost.
+  RSS can retain state from earlier requests. Route-count datasets use the same
+  workload order but have different preceding request counts and process history;
+  their RSS values do not isolate route-table cost.
 - Reports aggregate median CPU %, median per-run CPU us/request, median per-run
   mean RSS, and maximum sampled RSS across repeats. Request totals exclude warmup.
 
@@ -169,7 +210,7 @@ peer dependencies are ignored by Git. The recorded interpretation lives in
 
 These tests measure tiny-route throughput, latency, server CPU, and sampled RSS,
 not framework quality, private/heap memory, scalability across cores, slow-client resistance, mixed traffic,
-dependency-injection cost, or realistic application throughput. A closed-loop
+isolated dependency-injection cost, or realistic application throughput. A closed-loop
 test backs off with the server and can hide overload; use a separately designed
 constant-arrival-rate test for an SLO/capacity claim. Production comparisons need
 matched FPM/worker deployments, longer samples, and an isolated load-generator

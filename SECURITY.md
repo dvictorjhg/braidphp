@@ -8,7 +8,9 @@ and the current default branch.
 
 ## Runtime And Deployment
 
-Use PHP 8.4.27+ or 8.5.12+ and keep the runtime and operating system patched.
+Use PHP 8.4.27 or later in the 8.4 series, or PHP 8.5.12 and later PHP 8.x
+releases, and keep the runtime and operating system patched. PHP 8.5.0-8.5.11
+and PHP 9 are outside the package constraint.
 These minimums include the PHP security releases published on 2026-10-21.
 CI runs `composer audit` to check installed dependencies for known advisories.
 

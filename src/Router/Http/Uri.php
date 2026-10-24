@@ -21,8 +21,6 @@ class Uri implements UriInterface
     private string $query = '';
 
     private string $fragment = '';
-    /** @var list<string> */
-    private array $pathParts = [];
 
     public function __construct(string|UriInterface $uri)
     {
@@ -31,7 +29,7 @@ class Uri implements UriInterface
             if ($parts === false) {
                 throw new \InvalidArgumentException("The URI '$uri' could not be parsed.");
             }
-            $this->scheme = UriNormalizer::normalizeScheme($parts['scheme'] ?? '');
+            $this->scheme = \strtolower($parts['scheme'] ?? '');
             $this->userInfo = isset($parts['user'])
                 ? UriNormalizer::normalizeUserInfo($parts['user'], $parts['pass'] ?? null)
                 : '';
@@ -39,7 +37,7 @@ class Uri implements UriInterface
             $this->port = $parts['port'] ?? null;
             $this->path = UriNormalizer::normalizePath($parts['path'] ?? '');
             $this->query = UriNormalizer::normalizeQuery($parts['query'] ?? '');
-            $this->fragment = isset($parts['fragment']) ? UriNormalizer::normalizeFragment($parts['fragment']) : '';
+            $this->fragment = $parts['fragment'] ?? '';
         } else {
             $this->scheme = $uri->getScheme();
             $this->userInfo = $uri->getUserInfo();
@@ -49,8 +47,6 @@ class Uri implements UriInterface
             $this->query = $uri->getQuery();
             $this->fragment = $uri->getFragment();
         }
-
-        $this->pathParts = UriNormalizer::splitPath($this->path);
     }
 
     #[\Override]
@@ -92,6 +88,9 @@ class Uri implements UriInterface
     #[\Override]
     public function getPort(): ?int
     {
+        if (($this->scheme === 'http' && $this->port === 80) || ($this->scheme === 'https' && $this->port === 443)) {
+            return null;
+        }
         return $this->port;
     }
 
@@ -113,16 +112,10 @@ class Uri implements UriInterface
         return $this->fragment;
     }
 
-    /** @return list<string> */
-    public function getPathParts(): array
-    {
-        return $this->pathParts;
-    }
-
     #[\Override]
     public function withScheme(string $scheme): self
     {
-        $normalizedScheme = UriNormalizer::normalizeScheme($scheme);
+        $normalizedScheme = \strtolower($scheme);
         if ($normalizedScheme === $this->scheme) {
             return $this;
         }
@@ -161,6 +154,9 @@ class Uri implements UriInterface
     #[\Override]
     public function withPort(?int $port): self
     {
+        if ($port !== null && ($port < 0 || $port > 65535)) {
+            throw new \InvalidArgumentException('URI port must be between 0 and 65535.');
+        }
         if ($port === $this->port) {
             return $this;
         }
@@ -180,7 +176,6 @@ class Uri implements UriInterface
 
         $static = clone $this;
         $static->path = $filteredPath;
-        $static->pathParts = UriNormalizer::splitPath($filteredPath);
         return $static;
     }
 
@@ -200,13 +195,12 @@ class Uri implements UriInterface
     #[\Override]
     public function withFragment(string $fragment): self
     {
-        $normalizedFragment = UriNormalizer::normalizeFragment($fragment);
-        if ($normalizedFragment === $this->fragment) {
+        if ($fragment === $this->fragment) {
             return $this;
         }
 
         $static = clone $this;
-        $static->fragment = $normalizedFragment;
+        $static->fragment = $fragment;
         return $static;
     }
 

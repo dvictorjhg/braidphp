@@ -5,19 +5,20 @@ declare(strict_types=1);
 namespace dvictorjhg\braidphp\tests\unit\Router\Http;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\Uri;
 
 #[CoversClass(Uri::class)]
 final class UriTest extends TestCase
 {
-    public function testChangingPathRefreshesPathParts(): void
+    public function testChangesPathImmutably(): void
     {
         $uri = new Uri('/old/path');
         $changedUri = $uri->withPath('/new/%E2%9C%93');
 
-        self::assertSame(['old', 'path'], $uri->getPathParts());
-        self::assertSame(['new', '%E2%9C%93'], $changedUri->getPathParts());
+        self::assertSame('/old/path', $uri->getPath());
+        self::assertSame('/new/%E2%9C%93', $changedUri->getPath());
         self::assertSame('/new/%E2%9C%93', (string) $changedUri);
     }
 
@@ -45,7 +46,7 @@ final class UriTest extends TestCase
         $copy = new Uri($source);
 
         self::assertSame((string) $source, (string) $copy);
-        self::assertSame($source->getPathParts(), $copy->getPathParts());
+        self::assertSame($source->getPath(), $copy->getPath());
     }
 
     public function testAuthorityIsEmptyWithoutHost(): void
@@ -56,9 +57,9 @@ final class UriTest extends TestCase
     public function testRejectsUnparseableUri(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("The URI 'http://:bad' could not be parsed.");
+        $this->expectExceptionMessage("The URI 'https://:bad' could not be parsed.");
 
-        new Uri('http://:bad');
+        self::assertInstanceOf(Uri::class, new Uri('https://:bad'));
     }
 
     public function testWithMethodsAreImmutableAndReturnSameInstanceForSameValue(): void
@@ -92,5 +93,31 @@ final class UriTest extends TestCase
 
         self::assertSame('http://example.com/relative', (string) $relativePath);
         self::assertSame('/path', (string) $multipleLeadingSlashes);
+    }
+
+    public function testOmitsStandardPortsAndRetainsExplicitPortAcrossSchemeChanges(): void
+    {
+        $uri = new Uri('http://example.com:80/path');
+        self::assertNull($uri->getPort());
+        self::assertSame('example.com', $uri->getAuthority());
+        self::assertSame('http://example.com/path', (string) $uri);
+        self::assertSame(80, $uri->withScheme('https')->getPort());
+        self::assertNull((new Uri('https://example.com:443'))->getPort());
+        self::assertSame(0, $uri->withPort(0)->getPort());
+        self::assertSame(65535, $uri->withPort(65535)->getPort());
+    }
+
+    #[DataProvider('invalidPorts')]
+    public function testRejectsInvalidPorts(int $port): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        (new Uri('http://example.com'))->withPort($port);
+    }
+
+    /** @return iterable<array{int}> */
+    public static function invalidPorts(): iterable
+    {
+        yield [-1];
+        yield [65536];
     }
 }

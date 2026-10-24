@@ -17,47 +17,6 @@ class Stream implements StreamInterface
     private bool $writable;
     private bool $readable;
 
-    /** @var list<string> */
-    private static array $readModes = [
-        'r',
-        'w+',
-        'r+',
-        'x+',
-        'c+',
-        'rb',
-        'w+b',
-        'r+b',
-        'x+b',
-        'c+b',
-        'rt',
-        'w+t',
-        'r+t',
-        'x+t',
-        'c+t',
-        'a+',
-    ];
-
-    /** @var list<string> */
-    private static array $writeModes = [
-        'w',
-        'w+',
-        'rw',
-        'r+',
-        'x+',
-        'c+',
-        'wb',
-        'w+b',
-        'r+b',
-        'x+b',
-        'c+b',
-        'w+t',
-        'r+t',
-        'x+t',
-        'c+t',
-        'a',
-        'a+',
-    ];
-
     /**
      * @param resource $stream
      * @param int|null $size Stream size in bytes, or null if unknown.
@@ -72,8 +31,8 @@ class Stream implements StreamInterface
 
         $meta = \stream_get_meta_data($this->stream);
         $this->seekable = $meta['seekable'];
-        $this->readable = \in_array($meta['mode'], self::$readModes, true);
-        $this->writable = \in_array($meta['mode'], self::$writeModes, true);
+        $this->readable = \str_starts_with($meta['mode'], 'r') || \str_contains($meta['mode'], '+');
+        $this->writable = \str_contains($meta['mode'], '+') || \strpbrk($meta['mode'], 'waxc') !== false;
     }
 
     public function __destruct()
@@ -90,24 +49,9 @@ class Stream implements StreamInterface
                 return $this->getContents();
             }
             return '';
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return '';
         }
-    }
-
-    /**
-     * Creates a stream from the supplied value.
-     *
-     * @param bool|float|int|object|resource|string|null $resource Stream content.
-     * @param int|null $size Stream size in bytes, if known.
-     *
-     * @return StreamInterface
-     * @throws \InvalidArgumentException If $resource is invalid.
-     * @throws StreamException If a temporary stream cannot be created.
-     */
-    public static function of(mixed $resource, ?int $size = null): StreamInterface
-    {
-        return StreamFactory::create($resource, $size);
     }
 
     /**
@@ -154,19 +98,14 @@ class Stream implements StreamInterface
     #[\Override]
     public function getSize(): ?int
     {
-        $size = null;
-        if (isset($this->stream)) {
-            if ($this->size !== null) {
-                $size = $this->size;
-            } else {
-                $stats = \fstat($this->stream);
-                if (isset($stats['size'])) {
-                    $this->size = $stats['size'];
-                    $size = $this->size;
-                }
-            }
+        if (!isset($this->stream)) {
+            return null;
         }
-        return $size;
+        if ($this->size === null) {
+            $stats = \fstat($this->stream);
+            $this->size = $stats['size'] ?? null;
+        }
+        return $this->size;
     }
 
     /**

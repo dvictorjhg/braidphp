@@ -12,25 +12,6 @@ use dvictorjhg\braidphp\Router\Http\Response;
 #[CoversClass(Response::class)]
 final class ResponseTest extends TestCase
 {
-    public function testSerializesContentLengthWhenItIsMissing(): void
-    {
-        $serialized = (string) new Response(body: 'hello');
-
-        self::assertSame(1, \substr_count($serialized, 'Content-Length:'));
-        self::assertStringContainsString("Content-Length: 5\r\n", $serialized);
-    }
-
-    public function testDoesNotDuplicateExplicitContentLength(): void
-    {
-        $serialized = (string) new Response(
-            headers: ['Content-Length' => '99'],
-            body: 'hello'
-        );
-
-        self::assertSame(1, \substr_count($serialized, 'Content-Length:'));
-        self::assertStringContainsString("Content-Length: 99\r\n", $serialized);
-    }
-
     public function testChangesStatusImmutably(): void
     {
         $response = new Response();
@@ -64,10 +45,13 @@ final class ResponseTest extends TestCase
     public static function invalidStatuses(): iterable
     {
         $statuses = [
+            'zero' => [0, ''],
             'below range' => [99, ''],
             'above range' => [600, ''],
+            'far above range' => [999, ''],
             'header injection' => [200, "OK\r\nX-Injected: yes"],
             'newline' => [200, "OK\n"],
+            'newline injection' => [200, "OK\nInjected"],
             'null byte' => [200, "OK\0"],
             'control byte' => [200, "OK\x1F"],
             'delete byte' => [200, "OK\x7F"],

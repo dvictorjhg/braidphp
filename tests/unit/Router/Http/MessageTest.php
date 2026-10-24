@@ -9,14 +9,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\Message;
 use dvictorjhg\braidphp\Router\Http\Response;
-use dvictorjhg\braidphp\Router\Http\Stream;
+use dvictorjhg\braidphp\Router\Http\StreamFactory;
 
 #[CoversClass(Message::class)]
 final class MessageTest extends TestCase
 {
     public function testReadsHeadersAndStreamBody(): void
     {
-        $body = Stream::of('body');
+        $body = StreamFactory::create('body');
         $message = new Response(
             headers: ['X-Trace' => ['one', 'two']],
             body: $body,
@@ -57,7 +57,18 @@ final class MessageTest extends TestCase
     /** @return iterable<string, array{string, bool}> */
     public static function invalidProtocolVersions(): iterable
     {
-        foreach (['', 'HTTP/1.1', '1.1 extra', "1.1\r\nX-Injected: yes", "1.1\0", "1.1\n"] as $version) {
+        $versions = [
+            '',
+            'HTTP/1.1',
+            '1.1 extra',
+            "1.1\r\nX-Injected: yes",
+            "1.1\0",
+            "1.1\n",
+            '2 200 OK',
+            '-1',
+            '1.1.1',
+        ];
+        foreach ($versions as $version) {
             foreach ([true, false] as $construct) {
                 yield ($construct ? 'construct: ' : 'replace: ') . \bin2hex($version) => [$version, $construct];
             }
@@ -89,7 +100,7 @@ final class MessageTest extends TestCase
         self::assertFalse($withoutHeader->hasHeader('X-Trace'));
         self::assertSame($message, $message->withoutHeader('Missing'));
 
-        $newBody = Stream::of('new body');
+        $newBody = StreamFactory::create('new body');
         $withBody = $message->withBody($newBody);
         self::assertNotSame($message->getBody(), $withBody->getBody());
         self::assertSame($newBody, $withBody->getBody());

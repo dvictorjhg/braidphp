@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/site.css?v=20261019-2">
-    <script type="module" src="assets/js/site.js?v=20261019-3"></script>
+    <link rel="stylesheet" href="assets/css/site.css?v=20261024-5">
+    <script type="module" src="assets/js/site.js?v=20261024-4"></script>
 </head>
 <body>
     <a class="skip-link" href="#overview" data-i18n="nav.skip">Skip to documentation</a>
@@ -24,7 +24,7 @@
                     </svg>
                     <span class="brand-copy">
                         <span class="brand-name">Braid<span class="brand-accent">PHP</span></span>
-                        <span class="version" data-i18n="brand.version">1.1.1</span>
+                        <span class="version" data-i18n="brand.version">1.2.0</span>
                     </span>
                 </a>
                 <div class="nav-tools">
@@ -67,16 +67,16 @@
         <section class="hero">
             <div class="wrap hero-grid">
                 <div class="hero-copy">
-                    <p class="eyebrow" data-i18n="hero.eyebrow">PHP ^8.4 / PSR-7 / TCP</p>
+                    <p class="eyebrow" data-i18n="hero.eyebrow">PSR-7 / PSR-15 / PSR-17 / PSR-3</p>
                     <h1 data-i18n="hero.title">BraidPHP</h1>
-                    <p class="hero-lede" data-i18n="hero.lede">BraidPHP is an attribute-driven PHP framework for small HTTP applications that want module composition, explicit routing, and a visible request lifecycle.</p>
+                    <p class="hero-lede" data-i18n="hero.lede">BraidPHP combines attribute routes, modules, dependency injection, and PSR HTTP APIs. Use App::handle() for request handling or App::listen() for the bundled blocking TCP listener.</p>
                     <div class="hero-actions">
                         <a class="button-link" href="#first-app"><span data-i18n="hero.start">Build the first app</span><span aria-hidden="true">-&gt;</span></a>
                         <a class="button-link secondary" href="https://github.com/dvictorjhg/braidphp/blob/main/README.md"><span data-i18n="hero.readme">Open the README</span><span aria-hidden="true">+</span></a>
                     </div>
                     <div class="hero-facts" aria-label="Framework facts" data-i18n-aria-label="hero.factsAria">
                         <div><strong>09</strong><span data-i18n="hero.factMethods">HTTP method attributes</span></div>
-                        <div><strong>PSR</strong><span data-i18n="hero.factMessages">HTTP message contracts</span></div>
+                        <div><strong>PSR</strong><span data-i18n="hero.factMessages">messages, middleware, factories</span></div>
                         <div><strong>1P</strong><span data-i18n="hero.factProcess">blocking process model</span></div>
                     </div>
                 </div>
@@ -104,7 +104,7 @@ final class GreeterComponent
     #[Get('/hello/:name')]
     public function greet(Request $request): string
     {
-        $name = $request-&gt;getRouteParam('name') ?? '';
+        $name = $request-&gt;getAttribute('name') ?? '';
         return $this-&gt;greeterProvider-&gt;getGreeting($name);
     }
 }</code></pre>
@@ -124,18 +124,18 @@ final class GreeterComponent
                         <span class="section-number" data-i18n="overview.number">01 / Overview</span>
                         <h2 data-i18n="overview.title">Know what the framework does before you write code.</h2>
                     </div>
-                    <p data-i18n="overview.lede">This guide stays close to the repository: the source under src/, the Example application, the PHPUnit suite, Composer metadata, Docker files, and the CI workflow.</p>
+                    <p data-i18n="overview.lede">Start with a working application, then learn how to compose modules, declare routes, and handle HTTP messages. The later sections cover middleware, application testing, server configuration, and deployment boundaries.</p>
                 </div>
                 <div class="doc-grid two-up">
                     <article class="doc-card">
                         <span class="small-label" data-i18n="overview.whatLabel">What BraidPHP is</span>
                         <h3 data-i18n="overview.whatTitle">Attribute-driven routing plus a small runtime.</h3>
-                        <p data-i18n="overview.whatText">BraidPHP combines module composition, route scanning, immutable HTTP message objects, and a lightweight TCP listener. Dependency injection and provider storage come from dvictorjhg/php-injector.</p>
+                        <p data-i18n="overview.whatText">BraidPHP combines module composition, attribute routes, PSR-7 messages, PSR-15 middleware, PSR-17 factories, and PSR-3 listener logging. Dependency injection and provider storage come from dvictorjhg/php-injector.</p>
                     </article>
                     <article class="doc-card">
                         <span class="small-label" data-i18n="overview.runtimeLabel">Runtime model</span>
-                        <h3 data-i18n="overview.runtimeTitle">One request at a time, by design.</h3>
-                        <p data-i18n="overview.runtimeText">App::listen() accepts a socket connection, parses one HTTP request, resolves one route action, writes one response, and closes the client. There is no worker pool or async event loop in this repository.</p>
+                        <h3 data-i18n="overview.runtimeTitle">Native listener: one request at a time.</h3>
+                        <p data-i18n="overview.runtimeText">App::listen() accepts, parses, handles, writes, and closes each client connection sequentially. It does not create workers or run an event loop. App::handle() processes an existing PSR-7 server request without opening a socket; adapting it to another server is application work.</p>
                     </article>
                 </div>
                 <div class="api-table-wrap">
@@ -143,30 +143,30 @@ final class GreeterComponent
                         <thead>
                             <tr>
                                 <th data-i18n="overview.tableArea">Area</th>
-                                <th data-i18n="overview.tableFiles">Verified in</th>
+                                <th data-i18n="overview.tableComponents">Key components</th>
                                 <th data-i18n="overview.tableSummary">What to expect</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><code>src/Core</code></td>
-                                <td><code>App</code>, <code>#[Module]</code>, <code>ModuleScanner</code></td>
+                                <td data-i18n="nav.modules">Modules</td>
+                                <td><code>App</code>, <code>#[Module]</code></td>
                                 <td data-i18n="overview.coreSummary">Application bootstrap, module ordering, imports, providers, controllers, and bootstrap services.</td>
                             </tr>
                             <tr>
-                                <td><code>src/Router</code></td>
-                                <td><code>Router</code>, route attributes, HTTP messages</td>
+                                <td data-i18n="nav.routing">Routing</td>
+                                <td><code>Router</code>, <code>#[Route]</code>, <code>#[Get]</code>, <code>HttpMethod</code></td>
                                 <td data-i18n="overview.routerSummary">Route matching, path parameters, custom matchers, request parsing, response serialization, URI and stream helpers.</td>
                             </tr>
                             <tr>
-                                <td><code>Example/</code></td>
-                                <td><code>AppModule</code>, modules, controllers, providers, <code>index.php</code></td>
-                                <td data-i18n="overview.exampleSummary">A real application graph that shows imports, constructor injection, attribute routing, query parameters, multi-method routes, and the server entry point.</td>
+                                <td data-i18n="nav.http">HTTP</td>
+                                <td><code>Request</code>, <code>Response</code>, <code>HttpFactory</code>, <code>MiddlewareInterface</code></td>
+                                <td data-i18n="overview.httpSummary">Create messages, wrap request handling in middleware, and integrate PSR-compatible libraries through shared interfaces.</td>
                             </tr>
                             <tr>
-                                <td><code>.github/workflows/ci.yml</code></td>
-                                <td>GitHub Actions</td>
-                                <td data-i18n="overview.ciSummary">Composer validation, platform checks, PHPStan, PHP_CodeSniffer, PHPUnit coverage, Codecov upload, the CI-side 80% composer coverage gate, and separate 50% Codecov targets.</td>
+                                <td data-i18n="nav.runtime">Runtime</td>
+                                <td><code>App::handle()</code>, <code>App::listen()</code>, <code>HttpOptions</code></td>
+                                <td data-i18n="overview.runtimeSummary">Handle an existing server request or run the native TCP listener with configurable byte limits and read/write deadlines.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -176,20 +176,20 @@ final class GreeterComponent
                         <span class="small-label" data-i18n="overview.prereqLabel">Prerequisites</span>
                         <div data-i18n-html="overview.prereqHtml">
                             <ul class="checklist">
-                                <li>PHP 8.4.27+ or 8.5.12+</li>
+                                <li>PHP 8.4.27 or later in the 8.4 series, or PHP 8.5.12 and later PHP 8.x releases. PHP 8.5.0-8.5.11 and PHP 9 are outside the package constraint.</li>
                                 <li>Composer</li>
                                 <li>A second terminal for curl while the server keeps running</li>
                             </ul>
                         </div>
                     </article>
                     <article class="doc-card">
-                        <span class="small-label" data-i18n="overview.limitLabel">Explicit limitations</span>
+                        <span class="small-label" data-i18n="overview.limitLabel">Integration boundaries</span>
                         <div data-i18n-html="overview.limitHtml">
                             <ul class="checklist">
-                                <li>No middleware pipeline</li>
-                                <li>No multi-process runtime or event loop</li>
-                                <li>No request factory interfaces beyond the StreamFactory helper</li>
-                                <li>No templating, ORM, or session abstraction in this repository</li>
+                                <li>Middleware is registered on App, not on route declarations. It can inspect the request path to restrict its behavior.</li>
+                                <li>The native listener has no worker manager or event loop. Multiple listener processes need external supervision and traffic distribution.</li>
+                                <li>The TCP listener leaves multipart input as a raw body. Supply parsing middleware to populate parsed fields and uploaded files.</li>
+                                <li>No template engine, ORM, or session layer is bundled. Register application-selected services through providers; compatibility depends on the library and runtime.</li>
                             </ul>
                         </div>
                     </article>
@@ -215,7 +215,7 @@ final class GreeterComponent
     "name": "acme/hello-braid",
     "require": {
         "php": "~8.4.27 || ^8.5.12",
-        "dvictorjhg/braidphp": "^1.0"
+        "dvictorjhg/braidphp": "^1.2"
     },
     "autoload": {
         "psr-4": {
@@ -264,7 +264,7 @@ final class GreetingController
     #[Get('/hello/:name', pathMatch: 'full')]
     public function hello(Request $request): string
     {
-        return $this-&gt;greeter-&gt;greeting($request-&gt;getRouteParam('name') ?? '');
+        return $this-&gt;greeter-&gt;greeting($request-&gt;getAttribute('name') ?? '');
     }
 }</code></pre>
                     </article>
@@ -273,7 +273,7 @@ final class GreetingController
                     <article class="doc-card step-card">
                         <span class="small-label">03</span>
                         <h3 data-i18n="first.step3Title">Declare the application module.</h3>
-                        <p data-i18n="first.step3Text">Import HttpModule so the injector can resolve Router::class, then register the provider and controller.</p>
+                        <p data-i18n="first.step3Text">Import HttpModule to register Router::class explicitly, then register the provider and controller. You can also supply a configured Router through App providers.</p>
                         <p><code>src/AppModule.php</code></p>
                         <pre><code data-example-file="src/AppModule.php">&lt;?php
 
@@ -434,7 +434,7 @@ class HealthModule
                         </div>
                         <div class="ledger-row">
                             <span class="ledger-key">03</span>
-                            <div><strong data-i18n="modules.controllersTitle">controllers</strong><p data-i18n="modules.controllersText">Class strings or objects scanned for public route methods.</p></div>
+                            <div><strong data-i18n="modules.controllersTitle">controllers</strong><p data-i18n="modules.controllersText">Class strings or objects scanned for public route methods. Actions are stored by class name; to reuse a prebuilt controller, also register it as a provider under that class name.</p></div>
                         </div>
                         <div class="ledger-row">
                             <span class="ledger-key">04</span>
@@ -456,7 +456,7 @@ class HealthModule
                     <article class="doc-card step-card">
                         <span class="small-label" data-i18n="modules.appProvidersLabel">App constructor providers</span>
                         <h3 data-i18n="modules.appProvidersTitle">Seed providers before the first module.</h3>
-                        <p data-i18n="modules.appProvidersText">App accepts an optional array or Container in its constructor. Use it when infrastructure should exist before bootstrapModule() runs.</p>
+                        <p data-i18n="modules.appProvidersText">App accepts an array or Container in its constructor. Use it when infrastructure should exist before bootstrapModule() runs.</p>
                         <pre><code>&lt;?php
 
 declare(strict_types=1);
@@ -554,7 +554,7 @@ $app-&gt;bootstrapModule(new StartupModule());</code></pre>
                         <span class="section-number" data-i18n="routing.number">04 / Routing</span>
                         <h2 data-i18n="routing.title">Declare routes where the controller lives.</h2>
                     </div>
-                    <p class="muted" data-i18n="routing.lede">RouteScanner reads class and method attributes, Router walks the resulting tree depth-first, and App::handleRequest() attaches the matched parameters to a request copy. Immutable route-path segments are reused across dispatches; request parameters and custom matcher results are never cached.</p>
+                    <p class="muted" data-i18n="routing.lede">RouteScanner reads class and method attributes, Router walks the resulting tree depth-first, and App::handle() attaches the matched parameters to a request copy. Immutable route-path segments are reused across dispatches; request parameters and custom matcher results are never cached.</p>
                 </div>
                 <div class="routing-grid">
                     <div class="code-panel routing-code">
@@ -581,14 +581,14 @@ final class GreeterComponent
     )]
     public function hi(Request $request): string
     {
-        $name = $request-&gt;getRouteParam('name') ?? '';
+        $name = $request-&gt;getAttribute('name') ?? '';
         return "Hi $name!";
     }
 
     #[Get('/hello/:name')]
     public function greet(Request $request): string
     {
-        $name = $request-&gt;getRouteParam('name') ?? '';
+        $name = $request-&gt;getAttribute('name') ?? '';
         return 'Hello ' . $name . '!';
     }
 
@@ -635,11 +635,11 @@ final class GreeterComponent
                 <div class="doc-grid two-up gap-top on-dark">
                     <article class="doc-card dark-card">
                         <span class="small-label" data-i18n="routing.behaviorLabel">Matching behavior</span>
-                        <div data-i18n-html="routing.behaviorHtml"><ul class="checklist"><li>Class-level <code>#[Route(path: ...)]</code> values are prefixes by default; set <code>pathMatch: 'full'</code> when that route level must reject leftover segments.</li><li><code>:name</code> captures a decoded path segment and makes it available through <code>Request::getRouteParam()</code>.</li><li>Query strings are parsed from the URI into <code>Request::getQueryParams()</code>.</li><li>Routes are checked in the order they were added to <code>Router</code>; the first matching branch wins.</li><li>A method can accept multiple HTTP verbs through the generic <code>#[Route]</code> attribute with a combined integer mask such as <code>HttpMethod::GET-&gt;value | HttpMethod::POST-&gt;value</code>, or by stacking distinct shortcut attributes such as <code>#[Get]</code> and <code>#[Post]</code>.</li></ul></div>
+                        <div data-i18n-html="routing.behaviorHtml"><ul class="checklist"><li>Class-level <code>#[Route(path: ...)]</code> values are prefixes by default; set <code>pathMatch: 'full'</code> when that route level must reject leftover segments.</li><li><code>:name</code> captures a decoded path segment and makes it available through <code>Request::getAttribute()</code>.</li><li>Query strings are parsed from the URI into <code>Request::getQueryParams()</code>.</li><li>Routes are checked in the order they were added to <code>Router</code>; the first matching branch wins.</li><li>A method can accept multiple HTTP verbs through the generic <code>#[Route]</code> attribute with a combined integer mask such as <code>HttpMethod::GET-&gt;value | HttpMethod::POST-&gt;value</code>, or by stacking distinct shortcut attributes such as <code>#[Get]</code> and <code>#[Post]</code>.</li></ul></div>
                     </article>
                     <article class="doc-card dark-card">
                         <span class="small-label" data-i18n="routing.failureLabel">Failure cases</span>
-                        <div data-i18n-html="routing.failureHtml"><ul class="checklist"><li>No route match: <code>App::handleRequest()</code> returns <code>404 Not Found</code>.</li><li>Unsupported request method string: <code>Router::processRoutes()</code> throws <code>InvalidArgumentException</code>.</li><li>Invalid custom matcher result: the matcher must return <code>UrlMatcherResult</code> or <code>null</code>, otherwise <code>RouterException</code> is thrown.</li><li>Non-public methods with route attributes are ignored and emit a warning during scanning.</li><li>A class-level route without any method routes contributes no route entries.</li></ul></div>
+                        <div data-i18n-html="routing.failureHtml"><ul class="checklist"><li>No route match: <code>App::handle()</code> returns <code>404 Not Found</code>.</li><li>Unsupported request method string: <code>Router::processRoutes()</code> throws <code>InvalidArgumentException</code>.</li><li>Invalid custom matcher result: the matcher must return <code>UrlMatcherResult</code> or <code>null</code>, otherwise <code>RouterException</code> is thrown.</li><li>Non-public methods with route attributes are ignored and emit a warning during scanning.</li><li>A class-level route without any method routes contributes no route entries.</li></ul></div>
                     </article>
                 </div>
                 <div class="custom-match route-alternatives">
@@ -652,7 +652,7 @@ final class GreeterComponent
                         <pre><code>#[Get('/hello/:name', pathMatch: 'full')]
 public function hello(Request $request): string
 {
-    return 'Hello ' . ($request-&gt;getRouteParam('name') ?? '') . '!';
+    return 'Hello ' . ($request-&gt;getAttribute('name') ?? '') . '!';
 }</code></pre>
                         <pre><code>#[Route(
     httpMethod: HttpMethod::GET,
@@ -661,7 +661,7 @@ public function hello(Request $request): string
 )]
 public function hello(Request $request): string
 {
-    return 'Hello ' . ($request-&gt;getRouteParam('name') ?? '') . '!';
+    return 'Hello ' . ($request-&gt;getAttribute('name') ?? '') . '!';
 }</code></pre>
                         <div class="callout">
                             <span class="callout-mark" aria-hidden="true">!</span>
@@ -729,15 +729,15 @@ echo $matched !== null ? 'matched' : 'not matched';</code></pre>
                 <div class="section-heading">
                     <div>
                         <span class="section-number" data-i18n="http.number">05 / HTTP messages</span>
-                        <h2 data-i18n="http.title">Treat HTTP state as immutable values.</h2>
+                        <h2 data-i18n="http.title">Separate message immutability from stream state.</h2>
                     </div>
-                    <p data-i18n="http.lede">Request and Response extend a shared Message base class. Uri and Stream implement the relevant PSR interfaces directly, and with* methods return changed copies.</p>
+                    <p data-i18n="http.lede">Request and Response use immutable with* message operations. Body streams are mutable and shared when messages are cloned; use withBody() with a separate stream to isolate content. Uri has immutable component operations.</p>
                 </div>
                 <div class="http-grid">
                     <article class="http-card">
                         <div class="card-kicker">REQUEST</div>
                         <h3 data-i18n="http.requestTitle">Request</h3>
-                        <p data-i18n="http.requestText">Request implements RequestInterface, parses query parameters on construction, injects a Host header from the URI when needed, and stores route parameters only on withRouteParams() copies.</p>
+                        <p data-i18n="http.requestText">Request implements ServerRequestInterface with immutable attributes, cookies, query parameters, uploaded-file trees, and parsed body state. Matched route parameters and middleware context use the same request attributes.</p>
                         <pre><code data-example="request">&lt;?php
 
 declare(strict_types=1);
@@ -754,11 +754,11 @@ $request = new Request(
 );
 
 $routed = $request
-    -&gt;withRouteParams(['scope' =&gt; 'demo'])
+    -&gt;withAttribute('scope', 'demo')
     -&gt;withHeader('X-Trace', 'one')
     -&gt;withAddedHeader('X-Trace', 'two');
 
-echo ($request-&gt;getRouteParam('scope') ?? 'none') . "\n";
+echo ($request-&gt;getAttribute('scope') ?? 'none') . "\n";
 echo $routed-&gt;getHeaderLine('x-trace') . "\n";
 echo $routed-&gt;getHeaderLine('host') . "\n";</code></pre>
                         <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code data-output-for="request">none
@@ -768,12 +768,13 @@ example.test:8080</code></div>
                     <article class="http-card response-card">
                         <div class="card-kicker">RESPONSE</div>
                         <h3 data-i18n="http.responseTitle">Response</h3>
-                        <p data-i18n="http.responseText">Response implements ResponseInterface, supplies known reason phrases automatically, and writes Content-Type plus Content-Length during string serialization when those headers were not supplied.</p>
+                        <p data-i18n="http.responseText">Response implements ResponseInterface and supplies known reason phrases. ResponseEmitter owns native HTTP output and adds Content-Type and Content-Length when absent.</p>
                         <pre><code data-example="response">&lt;?php
 
 declare(strict_types=1);
 
 use dvictorjhg\braidphp\Router\Http\Response;
+use dvictorjhg\braidphp\Router\Http\ResponseEmitter;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -784,7 +785,9 @@ $response = new Response(
 
 echo $response-&gt;getStatusCode() . PHP_EOL;
 echo $response-&gt;getReasonPhrase() . PHP_EOL;
-echo (string) $response;</code></pre>
+$output = fopen('php://output', 'w');
+ResponseEmitter::write($output, $response);
+fclose($output);</code></pre>
                         <div class="example-output compact"><span data-i18n="example.expectedOutput">Expected output</span><code data-output-for="response">201
 Created
 HTTP/1.1 201 Created
@@ -793,6 +796,90 @@ Content-Length: 7
 
 welcome</code></div>
                     </article>
+                </div>
+                <div class="gap-top">
+                    <h3 data-i18n="http.middlewareTitle">PSR-15 middleware</h3>
+                    <p data-i18n="http.middlewareText">Register MiddlewareInterface instances with App::addMiddleware(). They run before routing in registration order and unwind in reverse order. A middleware can short-circuit or condition its work on the request path. Route parameters are added to the controller's request copy, not the middleware's original request. App implements RequestHandlerInterface; handle() accepts ServerRequestInterface and returns ResponseInterface. listen() uses the same pipeline.</p>
+                    <div class="code-panel">
+                        <div class="panel-topline"><span class="quickstart-label" data-i18n="http.middlewareTitle">PSR-15 middleware</span><span class="code-badge">PHP</span></div>
+                        <pre><code data-example="middleware">&lt;?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use dvictorjhg\braidphp\Core\App;
+use dvictorjhg\braidphp\Router\Http\Request;
+use dvictorjhg\braidphp\Router\Router;
+
+$app = new App([Router::class]);
+$app-&gt;addMiddleware(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        return $handler-&gt;handle($request)-&gt;withHeader('X-Frame-Options', 'DENY');
+    }
+});
+
+$response = $app-&gt;handle(new Request(uri: '/missing', body: ''));
+echo $response-&gt;getStatusCode() . ' ' . $response-&gt;getHeaderLine('X-Frame-Options');</code></pre>
+                        <div class="example-output"><span class="example-output-label" data-i18n="example.expectedOutput">Expected output</span><pre><code data-output-for="middleware">404 DENY</code></pre></div>
+                    </div>
+                    <p data-i18n="http.middlewareNotes">Register exception-to-response middleware first to wrap the entire pipeline. Direct calls propagate uncaught exceptions; listen() logs application errors and attempts a generic 500. Reused middleware stores request state in attributes. Controllers read path parameters with getAttribute(). Controller responses enter middleware unchanged; middleware may modify or replace them. ResponseEmitter accepts the resulting ResponseInterface without replacing its implementation.</p>
+                    <p data-i18n="http.serverState">Native Request construction defaults to PHP server/cookie globals and form POST data. Explicit serverParams disables global server, cookie, header, and form inference, but a null body still opens php://input; pass body: '' to avoid that. HttpFactory supplies explicit bodies and server parameters without importing globals. Native TCP input is not decoded into cookie parameters, JSON data, form fields, or uploaded files. Supply parsing middleware with withCookieParams(), withParsedBody(), and withUploadedFiles(). Request does not normalize $_FILES automatically, including under a SAPI. MiddlewarePipeline also supports a custom terminal RequestHandlerInterface.</p>
+                </div>
+                <div class="gap-top">
+                    <h3 data-i18n="http.factoriesTitle">PSR-17 factories and PSR-3 logging</h3>
+                    <p data-i18n="http.factoriesText">HttpFactory implements all six factory interfaces: request, response, server request, stream, uploaded file, and URI. Requests do not import PHP globals. Valid extension-method tokens are accepted as message values; routing still uses HttpMethod. App accepts any LoggerInterface through its logger constructor argument.</p>
+                    <div class="code-panel">
+                        <div class="panel-topline"><span class="quickstart-label" data-i18n="http.factoriesTitle">PSR-17 factories and PSR-3 logging</span><span class="code-badge">PHP</span></div>
+                        <pre><code data-example="http-factories">&lt;?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+use dvictorjhg\braidphp\Core\App;
+use dvictorjhg\braidphp\Core\ErrorLogLogger;
+use dvictorjhg\braidphp\Router\Http\HttpFactory;
+use dvictorjhg\braidphp\Router\Router;
+
+$factory = new HttpFactory();
+$app = new App([Router::class], logger: new ErrorLogLogger());
+$request = $factory-&gt;createServerRequest('GET', '/missing', ['REMOTE_ADDR' =&gt; '127.0.0.1']);
+$response = $factory-&gt;createResponse(201)
+    -&gt;withHeader('Content-Type', 'text/plain')
+    -&gt;withBody($factory-&gt;createStream('created'));
+
+echo $response-&gt;getStatusCode() . ' ' . $response-&gt;getBody() . PHP_EOL;
+echo $app-&gt;handle($request)-&gt;getStatusCode();</code></pre>
+                        <div class="example-output"><span class="example-output-label" data-i18n="example.expectedOutput">Expected output</span><pre><code data-output-for="http-factories">201 created
+404</code></pre></div>
+                    </div>
+                    <p data-i18n="http.uploadNotes">createStreamFromFile() opens a file and createStreamFromResource() requires a readable stream resource. createUploadedFile() validates size and upload-error metadata. UploadedFile::moveTo() accepts local paths, checks writes, and prevents repeat moves or stream access after success. Client filenames and media types remain untrusted metadata; multipart parsing is not bundled.</p>
+                    <p data-i18n="http.loggingNotes">Listener failures are logged at error level with context['exception']. Malformed requests and uncaught application errors produce generic 400/500 responses when writing succeeds. Response-write failures are logged and the connection closes without a replacement response. ErrorLogLogger accepts all eight standard levels and logs message text plus throwable details without placeholder interpolation. If a custom logger throws, the listener falls back to error_log(). Direct handle() calls still propagate uncaught exceptions.</p>
+                    <p data-i18n="http.validationNotes">Message construction and mutation validate numeric protocol versions, 100-599 response status codes, and valid reason phrases. URIs preserve percent-encoded delimiters; route parameters are decoded once and keep literal plus signs. Ports must be 0-65535 or null; standard HTTP/HTTPS ports are omitted. Stream capabilities follow native modes, including append and exclusive-create variants.</p>
+                </div>
+                <div id="psr-standards" class="gap-top">
+                    <h3 data-i18n="http.standardsTitle">Implemented PHP-FIG standards</h3>
+                    <p data-i18n="http.standardsIntro">Use PSR-7 interfaces for messages, PSR-15 for middleware and handlers, PSR-17 for factories, and PSR-3 for listener logging. Accept interfaces in application services to avoid coupling them to a specific implementation.</p>
+                    <p data-i18n="http.standardsScope">Register application-selected cache, event, clock, HTTP client, or link services as providers when needed; these services are not bundled. The router's internal path-segment cache is not a general PSR-6/PSR-16 cache API.</p>
+                    <div class="api-table-wrap">
+                        <table class="api-table">
+                            <thead><tr><th data-i18n="http.standardsColumn">Standard</th><th data-i18n="http.standardsUse">Implemented support</th></tr></thead>
+                            <tbody>
+                                <tr><td><a href="https://www.php-fig.org/psr/psr-7/">PSR-7</a></td><td data-i18n="http.standards7">Messages, server requests, responses, URIs, streams, and uploaded files.</td></tr>
+                                <tr><td><a href="https://www.php-fig.org/psr/psr-11/">PSR-11</a></td><td data-i18n="http.standards11">PHPInjector provides the container. App accepts its concrete Container, not arbitrary ContainerInterface implementations.</td></tr>
+                                <tr><td><a href="https://www.php-fig.org/psr/psr-15/">PSR-15</a></td><td data-i18n="http.standards15">App is a RequestHandlerInterface with ordered MiddlewareInterface registration.</td></tr>
+                                <tr><td><a href="https://www.php-fig.org/psr/psr-17/">PSR-17</a></td><td data-i18n="http.standards17">HttpFactory implements all six HTTP factory interfaces from psr/http-factory.</td></tr>
+                                <tr><td><a href="https://www.php-fig.org/psr/psr-3/">PSR-3</a></td><td data-i18n="http.standards3">App accepts LoggerInterface; ErrorLogLogger is the default, with fallback logging for a failing custom backend.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p><a href="https://www.php-fig.org/psr/" data-i18n="http.standardsIndex">PHP-FIG standards index</a></p>
                 </div>
                 <div class="api-table-wrap">
                     <table class="api-table">
@@ -806,18 +893,18 @@ welcome</code></div>
                         <tbody>
                             <tr>
                                 <td><code>Request</code></td>
-                                <td data-i18n-html="http.requestRow">Implements <code>RequestInterface</code>, not <code>ServerRequestInterface</code>.</td>
-                                <td data-i18n="http.requestRowNote">Query params come from the URI; route params are BraidPHP-specific helpers.</td>
+                                <td data-i18n-html="http.requestRow">Implements <code>ServerRequestInterface</code>, including <code>RequestInterface</code>.</td>
+                                <td data-i18n="http.requestRowNote">Query parameters come from the URI; matched route parameters are immutable attributes.</td>
                             </tr>
                             <tr>
                                 <td><code>Response</code></td>
-                                <td data-i18n-html="http.responseRow">Wraps the body as a stream and serializes itself to a wire-format HTTP response string.</td>
+                                <td data-i18n-html="http.responseRow">Owns response status, headers, and a stream body. ResponseEmitter writes any ResponseInterface to a native stream with checked writes and deadlines.</td>
                                 <td data-i18n="http.responseRowNote">Explicit Content-Length and Content-Type headers are preserved.</td>
                             </tr>
                             <tr>
                                 <td><code>Uri</code></td>
-                                <td data-i18n-html="http.uriRow">Implements <code>UriInterface</code>, normalizes scheme/host/query data, and keeps derived path parts in sync.</td>
-                                <td data-i18n-html="http.uriRowNote">Path parameters are matched against <code>getPathParts()</code>.</td>
+                                <td data-i18n-html="http.uriRow">Implements <code>UriInterface</code> with immutable components and percent-encoding normalization.</td>
+                                <td data-i18n-html="http.uriRowNote">The router splits <code>getPath()</code> from any PSR URI implementation.</td>
                             </tr>
                             <tr>
                                 <td><code>Stream</code></td>
@@ -825,9 +912,9 @@ welcome</code></div>
                                 <td data-i18n="http.streamRowNote">Detached streams reject tell/read/write/seek/eof/getContents operations.</td>
                             </tr>
                             <tr>
-                                <td><code>StreamFactory</code></td>
-                                <td data-i18n-html="http.factoryRow">Helper for creating PSR streams from scalars, native PHP stream resources, stringable objects, or existing streams.</td>
-                                <td data-i18n="http.factoryRowNote">This repository does not ship PSR-17 request or response factory interfaces.</td>
+                                <td><code>HttpFactory</code></td>
+                                <td data-i18n-html="http.factoryRow">Implements all six PSR-17 factory interfaces.</td>
+                                <td data-i18n="http.factoryRowNote">Factory requests are isolated from PHP globals. Use StreamFactory::create() to convert a value into a body stream.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -835,11 +922,11 @@ welcome</code></div>
                 <div class="doc-grid two-up gap-top">
                     <article class="doc-card">
                         <span class="small-label" data-i18n="http.conversionLabel">Action result conversion</span>
-                        <div data-i18n-html="http.conversionHtml"><ul class="checklist"><li>If an action returns <code>Response</code>, BraidPHP sends it unchanged.</li><li><code>null</code>, scalars, native PHP stream resources, PSR streams, and stringable objects are wrapped into <code>new Response(200, [], ...)</code>.</li><li>Arrays are rejected explicitly by <code>App::responseFromResult()</code>.</li><li>Objects that are neither stringable nor streams fail when the body is converted into a stream.</li></ul></div>
+                        <div data-i18n-html="http.conversionHtml"><ul class="checklist"><li>Actions may return any <code>ResponseInterface</code>; middleware may modify the response.</li><li><code>null</code>, scalars, native PHP stream resources, PSR streams, and stringable objects are wrapped into <code>new Response(200, [], ...)</code>.</li><li>Arrays are rejected explicitly by <code>App::responseFromResult()</code>.</li><li>Objects that are neither stringable nor streams fail when the body is converted into a stream.</li></ul></div>
                     </article>
                     <article class="doc-card">
                         <span class="small-label" data-i18n="http.serializationLabel">Serialization and streams</span>
-                        <div data-i18n-html="http.serializationHtml"><ul class="checklist"><li>Header names are case-insensitive and preserve the original output casing used when they were set.</li><li><code>withHeader()</code>, <code>withAddedHeader()</code>, <code>withoutHeader()</code>, <code>withBody()</code>, and URI <code>with*</code> methods are immutable.</li><li><code>Stream::of()</code> accepts scalar values, native stream resources, stringable objects, existing PSR streams, or <code>null</code>.</li><li>For seekable streams, serialization preserves content plus readable/writable/seekable flags. A non-seekable stream can serialize with empty content because rewinding fails.</li></ul></div>
+                        <div data-i18n-html="http.serializationHtml"><ul class="checklist"><li>Header names are case-insensitive and preserve the original output casing used when they were set.</li><li><code>withHeader()</code>, <code>withAddedHeader()</code>, <code>withoutHeader()</code>, <code>withBody()</code>, and URI <code>with*</code> methods are immutable.</li><li><code>StreamFactory::create()</code> accepts scalar values, native stream resources, stringable objects, existing PSR streams, or <code>null</code>.</li><li>For seekable streams, serialization preserves content plus readable/writable/seekable flags. A non-seekable stream can serialize with empty content because rewinding fails.</li></ul></div>
                     </article>
                 </div>
             </div>
@@ -849,12 +936,13 @@ welcome</code></div>
             <div class="wrap">
                 <div class="section-heading">
                     <div>
-                        <span class="section-number" data-i18n="recipes.label">Recipes / Executable examples</span>
+                        <span class="section-number" data-i18n="recipes.label">06 / Recipes</span>
                         <h2 data-i18n="recipes.title">A JSON API without opening a socket.</h2>
                     </div>
-                    <p data-i18n="recipes.lede">Run this complete example from the project root after composer install. It exercises module bootstrap, named configuration, constructor injection, decoded path parameters, query validation, and immutable requests.</p>
+                    <p data-i18n="recipes.lede">Build a JSON endpoint with an injected service, named configuration, decoded path parameters, and query validation. Run this complete example from your project root after composer install; handle() lets you send requests without starting the listener.</p>
                 </div>
                 <div class="code-panel">
+                    <div class="panel-topline"><span class="quickstart-label" data-i18n="recipes.title">A JSON API without opening a socket.</span><span class="code-badge">PHP</span></div>
                     <pre><code data-example="json-api">&lt;?php
 
 declare(strict_types=1);
@@ -896,7 +984,7 @@ final class ProfilesController
     #[Get('/users/:name', pathMatch: 'full')]
     public function user(Request $request): Response
     {
-        return $this-&gt;profiles-&gt;response($request-&gt;getRouteParam('name') ?? '');
+        return $this-&gt;profiles-&gt;response($request-&gt;getAttribute('name') ?? '');
     }
 
     #[Get('/users', pathMatch: 'full')]
@@ -907,12 +995,6 @@ final class ProfilesController
             return new Response(400, ['Content-Type' =&gt; 'application/json'], '{"error":"name is required"}');
         }
         return $this-&gt;profiles-&gt;response($name);
-    }
-
-    #[Get('/fail', pathMatch: 'full')]
-    public function fail(): never
-    {
-        throw new RuntimeException('demo failure');
     }
 }
 
@@ -928,48 +1010,35 @@ final class ProfilesModule
 $app = new App();
 $app-&gt;bootstrapModule(new ProfilesModule());
 $request = new Request(method: HttpMethod::GET, uri: '/api/users/Ada%20Lovelace');
-$response = $app-&gt;handleRequest($request);
+$response = $app-&gt;handle($request);
 echo $response-&gt;getStatusCode() . ' ' . (string) $response-&gt;getBody() . PHP_EOL;
 echo $response-&gt;getHeaderLine('Content-Type') . PHP_EOL;
-var_dump($request-&gt;getRouteParams());
 
-foreach (['/api/users?name=', '/api/users/Ada/extra', '/missing'] as $uri) {
-    $response = $app-&gt;handleRequest(new Request(method: HttpMethod::GET, uri: $uri));
+foreach (['/api/users?name=', '/missing'] as $uri) {
+    $response = $app-&gt;handle(new Request(method: HttpMethod::GET, uri: $uri));
     echo $response-&gt;getStatusCode() . ' ' . (string) $response-&gt;getBody() . PHP_EOL;
-}
-
-try {
-    $app-&gt;handleRequest(new Request(method: HttpMethod::GET, uri: '/api/fail'));
-} catch (RuntimeException $exception) {
-    echo $exception-&gt;getMessage();
 }</code></pre>
                     <div class="example-output">
                         <span class="example-output-label" data-i18n="example.expectedOutput">Expected output</span>
                         <pre><code data-output-for="json-api">200 {"name":"Ada Lovelace","env":"test"}
 application/json
-array(0) {
-}
 400 {"error":"name is required"}
-404 Not Found
-404 Not Found
-demo failure</code></pre>
+404 Not Found</code></pre>
                     </div>
                 </div>
                 <div class="doc-grid two-up gap-top">
                     <article class="doc-card">
                         <h3 data-i18n="recipes.resultsTitle">Action results are not automatically JSON</h3>
                         <div data-i18n-html="recipes.results"><ul class="checklist">
-                            <li>A framework Response is returned unchanged.</li>
+                            <li>Actions may return any ResponseInterface; middleware may modify the response.</li>
                             <li>Null, scalars, native streams, PSR streams, and stringable objects become a 200 Response. Set your content type explicitly.</li>
                             <li>Arrays raise AppException; ordinary non-stringable objects fail stream conversion. Return json_encode() in a Response for JSON.</li>
-                            <li>handleRequest() propagates action exceptions. Only listen() catches them, logs details server-side, and sends a generic 500 response.</li>
+                            <li>Direct handlers propagate exceptions unless middleware catches them. listen() logs uncaught application errors and attempts a generic 500 response; failed writes close the connection.</li>
                         </ul></div>
                     </article>
                     <article class="doc-card">
-                        <h3 data-i18n="recipes.testsTitle">Repeatable checks</h3>
-                        <p data-i18n="recipes.testsText">The documentation checker executes marked examples in isolated PHP processes and compares exact output. It needs PHP DOM and proc_open. The first-app files and live example routes can also be checked through handleRequest() without binding a port.</p>
-                        <pre><code class="language-bash">php tools/check-docs.php
-composer test</code></pre>
+                        <h3 data-i18n="recipes.testsTitle">Test handlers without a server</h3>
+                        <p data-i18n="recipes.testsText">In an application test, bootstrap your module, construct a Request, and pass it to App::handle(). Assert the returned response status, headers, and body. Include valid input, invalid input, and a missing route, as above. No port, web server, or curl process is needed.</p>
                         <p data-i18n="recipes.scopeText">The injector is globally active, not request scoped. Avoid request data in cached services and avoid bootstrapping unrelated applications in the same process.</p>
                     </article>
                 </div>
@@ -980,17 +1049,18 @@ composer test</code></pre>
             <div class="wrap">
                 <div class="section-heading">
                     <div>
-                        <span class="section-number" data-i18n="runtime.number">06 / Runtime lifecycle</span>
+                        <span class="section-number" data-i18n="runtime.number">07 / Runtime lifecycle</span>
                         <h2 data-i18n="runtime.title">Follow the request from the socket to the controller result.</h2>
                     </div>
-                    <p data-i18n="runtime.lede">The request lifecycle is short enough to read end-to-end in App.php, RequestParser.php, Router.php, and the Example controllers.</p>
+                    <p data-i18n="runtime.lede">The native listener accepts and parses a connection, passes the request through middleware and routing, invokes the controller, and writes the response. Calling handle() directly uses the same middleware and dispatch steps without socket parsing or response emission.</p>
                 </div>
                 <div class="runtime-flow" aria-label="Request handling flow" data-i18n-aria-label="runtime.flowAria">
                     <div class="runtime-step"><span>01</span><strong data-i18n="runtime.socket">Accept</strong><small>stream_socket_accept()</small></div>
-                    <div class="runtime-step"><span>02</span><strong data-i18n="runtime.parse">Parse</strong><small>Request::fromResource()</small></div>
-                    <div class="runtime-step"><span>03</span><strong data-i18n="runtime.match">Match</strong><small>Router::processRoutes()</small></div>
-                    <div class="runtime-step"><span>04</span><strong data-i18n="runtime.resolve">Resolve</strong><small>Injector::inject()</small></div>
-                    <div class="runtime-step"><span>05</span><strong data-i18n="runtime.write">Write</strong><small>Response::__toString()</small></div>
+                    <div class="runtime-step"><span>02</span><strong data-i18n="runtime.parse">Parse</strong><small>RequestParser::<wbr>fromResource()</small></div>
+                    <div class="runtime-step"><span>03</span><strong data-i18n="runtime.middleware">Middleware</strong><small>App::handle()</small></div>
+                    <div class="runtime-step"><span>04</span><strong data-i18n="runtime.match">Match</strong><small>Router::processRoutes()</small></div>
+                    <div class="runtime-step"><span>05</span><strong data-i18n="runtime.resolve">Resolve</strong><small>Injector::inject()</small></div>
+                    <div class="runtime-step"><span>06</span><strong data-i18n="runtime.write">Write</strong><small>ResponseEmitter::write()</small></div>
                 </div>
                 <div class="doc-grid lifecycle-grid gap-top">
                     <article class="doc-card">
@@ -1006,12 +1076,12 @@ composer test</code></pre>
                     <article class="doc-card">
                         <span class="small-label">03</span>
                         <h3 data-i18n="runtime.stage3Title">Controller invocation</h3>
-                        <p data-i18n="runtime.stage3Text">App::handleRequest() clones the matched request with route params and invokes the route action through PHPInjector. The request copy is passed as an explicit argument keyed by its class name.</p>
+                        <p data-i18n="runtime.stage3Text">App runs middleware before routing, attaches matched path parameters as request attributes, and invokes the route action through PHPInjector. Request arguments are available by concrete class and PSR request interface; responses return through the middleware in reverse order.</p>
                     </article>
                     <article class="doc-card">
                         <span class="small-label">04</span>
                         <h3 data-i18n="runtime.stage4Title">Result conversion and failures</h3>
-                        <p data-i18n="runtime.stage4Text">A Response is returned unchanged. Null, scalars, native PHP stream resources, existing PSR streams, and stringable objects become Response(200, [], body). Arrays raise AppException; non-stringable objects fail body conversion. The socket loop logs uncaught throwables and returns a generic 500 response. Partial writes use HttpOptions::writeTimeout, defaulting to five seconds.</p>
+                        <p data-i18n="runtime.stage4Text">Any ResponseInterface enters response middleware unchanged; other supported results become Response(200, [], body). Arrays raise AppException; non-stringable objects fail body conversion. The listener logs application errors and attempts a generic 500. ResponseEmitter buffers the body and full HTTP payload before writing. Its five-second default writeTimeout covers socket writes after serialization, not controller execution or body conversion. Write failures are logged and the connection closes.</p>
                     </article>
                 </div>
                 <div class="runtime-grid">
@@ -1041,8 +1111,8 @@ $app-&gt;listen(
                         <p data-i18n="runtime.commandText">Use a process manager, reverse proxy, or container platform when the application needs more than one worker.</p>
                     </div>
                     <div class="status-grid">
-                        <div class="status-item status-404"><strong>404</strong><div><span data-i18n="runtime.notFoundTitle">No matching route</span><p data-i18n="runtime.notFoundText">App::handleRequest() returns a plain Not Found response.</p></div></div>
-                        <div class="status-item status-500"><strong>500</strong><div><span data-i18n="runtime.serverErrorTitle">Unhandled throwable</span><p data-i18n="runtime.serverErrorText">The listener logs the exception server-side and returns Internal Server Error without exposing its details. Malformed requests receive 400 Bad Request.</p></div></div>
+                        <div class="status-item status-404"><strong>404</strong><div><span data-i18n="runtime.notFoundTitle">No matching route</span><p data-i18n="runtime.notFoundText">App::handle() returns a plain Not Found response.</p></div></div>
+                        <div class="status-item status-500"><strong>500</strong><div><span data-i18n="runtime.serverErrorTitle">Unhandled throwable</span><p data-i18n="runtime.serverErrorText">The native listener logs application exceptions and attempts 500 Internal Server Error without exposing details. Malformed input triggers an attempted 400 Bad Request. If response writing fails, the connection closes without a replacement response.</p></div></div>
                     </div>
                 </div>
             </div>
@@ -1052,25 +1122,33 @@ $app-&gt;listen(
             <div class="wrap">
                 <div class="section-heading">
                     <div>
-                        <span class="section-number" data-i18n="operations.number">07 / Operations</span>
+                        <span class="section-number" data-i18n="operations.number">08 / Operations</span>
                         <h2 data-i18n="operations.title">Configure the server, then choose how to run it.</h2>
                     </div>
                     <p data-i18n="operations.lede">The repository ships both direct PHP entry points and container-oriented workflows for development and production images.</p>
                 </div>
                 <div class="doc-grid two-up">
-                    <article class="doc-card">
+                    <article class="doc-card step-card">
                         <span class="small-label" data-i18n="operations.envLabel">Environment variables</span>
-                        <div data-i18n-html="operations.envHtml"><ul class="checklist"><li><code>SERVER_ADDRESS</code>: defaults to <code>0.0.0.0</code> in <code>Example/index.php</code>.</li><li><code>SERVER_PORT</code>: defaults to <code>8000</code> and is also published by the container helpers.</li><li><code>ENVIRONMENT</code>, <code>APP_PATH</code>, <code>DOCKER_IMAGE_TAG</code>, and <code>XDEBUG_MODE</code> are defined in <code>.env</code> for the checked-in container workflows.</li></ul></div>
+                        <div data-i18n-html="operations.envHtml"><ul class="checklist"><li><code>SERVER_ADDRESS</code>: defaults to <code>0.0.0.0</code> in <code>Example/index.php</code>.</li><li><code>SERVER_PORT</code>: defaults to <code>8000</code> and is published by both container workflows.</li><li><code>ENVIRONMENT</code>, <code>APP_PATH</code>, and <code>DOCKER_IMAGE_TAG</code> configure the target, application path, and image label.</li></ul></div>
+                        <p data-i18n="operations.envSetupText">Create a local .env at the repository root before either container command. These values select development, not production deployment. Compose forwards .env to the container; the Podman helpers only set selected variables and do not forward XDEBUG_MODE from that file.</p>
+                        <pre><code class="language-ini" data-config="container-env">ENVIRONMENT=development
+APP_PATH=/app
+SERVER_ADDRESS=0.0.0.0
+SERVER_PORT=8000
+DOCKER_IMAGE_TAG=php-8.5.12-cli-trixie</code></pre>
                     </article>
                     <article class="doc-card">
                         <span class="small-label" data-i18n="operations.deployLabel">Deployment guidance</span>
                         <div data-i18n-html="operations.deployHtml"><ul class="checklist"><li>Use <code>php Example/index.php</code> or your own front controller for direct local runs.</li><li>Because the runtime is single-process and blocking, scale by running multiple container or process instances behind a reverse proxy or platform load balancer.</li><li>The repository Docker image uses PHP <code>8.5.12</code>; the package requires PHP <code>~8.4.27 || ^8.5.12</code>.</li><li>Do not expect long-running concurrent workloads to be multiplexed inside one BraidPHP listener process.</li></ul></div>
                     </article>
                 </div>
-                <div class="code-panel gap-top">
-                    <div class="panel-topline"><span data-i18n="operations.optionsTitle">Per-application HTTP options</span><span class="code-badge">PHP</span></div>
-                    <p data-i18n="operations.optionsText">Pass immutable HttpOptions to App or directly to Request::fromResource(). Sizes are bytes, deadlines are finite positive seconds, and backlog is a positive socket queue size. Defaults are 65536 header bytes, 8388608 body bytes, five seconds for each deadline, and backlog 128. Zero body bytes rejects nonempty bodies. Invalid options throw InvalidArgumentException; no vendor edits are needed.</p>
-                    <pre><code data-example="http-options">&lt;?php
+                <div class="gap-top">
+                    <h3 data-i18n="operations.optionsTitle">Per-application HTTP options</h3>
+                    <p data-i18n="operations.optionsText">Pass immutable HttpOptions to App or directly to RequestParser::fromResource(). Sizes are bytes, deadlines are finite positive seconds, and backlog is a positive socket queue size. Defaults are 65536 header bytes, 8388608 body bytes, five seconds for each deadline, and backlog 128. Zero body bytes rejects nonempty bodies. Invalid options throw InvalidArgumentException.</p>
+                    <div class="code-panel">
+                        <div class="panel-topline"><span class="quickstart-label">HttpOptions</span><span class="code-badge">PHP</span></div>
+                        <pre><code data-example="http-options">&lt;?php
 
 declare(strict_types=1);
 
@@ -1078,7 +1156,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 use dvictorjhg\braidphp\Core\App;
 use dvictorjhg\braidphp\Router\Http\HttpOptions;
-use dvictorjhg\braidphp\Router\Http\Request;
+use dvictorjhg\braidphp\Router\Http\RequestParser;
 
 $options = new HttpOptions(
     maxHeaderBytes: 131_072,
@@ -1092,12 +1170,13 @@ $stream = fopen('php://temp', 'w+');
 fwrite($stream, "POST / HTTP/1.1\r\nContent-Length:4\r\n\r\ndata");
 rewind($stream);
 try {
-    $request = Request::fromResource($stream, $options);
+    $request = RequestParser::fromResource($stream, $options);
     echo (string) $request?-&gt;getBody();
 } finally {
     fclose($stream);
 }</code></pre>
-                    <div class="example-output"><span class="example-output-label" data-i18n="example.expectedOutput">Expected output</span><pre><code data-output-for="http-options">data</code></pre></div>
+                        <div class="example-output"><span class="example-output-label" data-i18n="example.expectedOutput">Expected output</span><pre><code data-output-for="http-options">data</code></pre></div>
+                    </div>
                 </div>
                 <div class="doc-grid two-up gap-top">
                     <article class="doc-card step-card">
@@ -1119,25 +1198,22 @@ podman exec braidphp-development composer test
                     <span class="callout-mark" aria-hidden="true">!</span>
                     <div>
                         <strong data-i18n="operations.noteTitle">Package install versus repository clone</strong>
-                        <p data-i18n="operations.noteText">composer.json excludes Example/ when Composer creates an archive. Repository and Packagist archive contents are controlled by their hosting and distribution settings. The Example tree remains in this repository and in the container images because it is the runnable demo.</p>
+                        <p data-i18n="operations.noteText">Clone the repository to run the bundled Example application and container workflows. For a Composer-installed application, create your own entry point and modules as shown in First application; do not depend on Example files being installed with the package.</p>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <section class="section pale" id="listener-limits">
-            <div class="wrap">
-                <h2 data-i18n="operations.safetyTitle">Public listener limitations</h2>
-                <p data-i18n="operations.safetyText">This is a minimal HTTP listener, not a hardened edge server. TLS, worker supervision, and rate limiting need an external boundary. Configure byte limits, read/write deadlines, and backlog with HttpOptions. Chunked requests are rejected and persistent connections are not provided. Listener errors are sanitized and logged server-side. HEAD does not automatically suppress the body, and unmatched methods do not automatically return 405.</p>
+                <div class="gap-top" id="listener-limits">
+                    <h3 data-i18n="operations.safetyTitle">Public listener limitations</h3>
+                    <p data-i18n="operations.safetyText">This is a minimal HTTP listener, not a hardened edge server. TLS, worker supervision, and rate limiting need an external boundary. Configure byte limits, read/write deadlines, and backlog with HttpOptions. Chunked requests are rejected and persistent connections are not provided. HEAD does not automatically suppress the body. Supported verbs without a route return 404, not 405. Methods outside HttpMethod raise a routing exception; without catching middleware, the listener logs it and attempts a generic 500 rather than 501.</p>
+                </div>
             </div>
         </section>
 
         <section class="section" id="development">
             <div class="wrap development-grid">
                 <div>
-                    <span class="section-number" data-i18n="development.number">08 / Development and release</span>
-                    <h2 data-i18n="development.title">Read the source. Run the checks. Publish deliberately.</h2>
-                    <p data-i18n="development.lede">The contributor workflow is intentionally plain: Composer validation, platform checks, static analysis, coding standards, PHPUnit, coverage, and a small release checklist.</p>
+                    <span class="section-number" data-i18n="development.number">09 / Development</span>
+                    <h2 data-i18n="development.title">Test and contribute to BraidPHP.</h2>
+                    <p data-i18n="development.lede">When working on the framework itself, install the development dependencies, then check types, coding standards, tests, and coverage. Application tests can call handlers directly without starting the listener.</p>
                     <div class="development-links">
                         <a href="https://github.com/dvictorjhg/braidphp/blob/main/README.md" data-i18n="development.readme">README</a>
                         <a href="https://github.com/dvictorjhg/braidphp/blob/main/CONTRIBUTING.md" data-i18n="development.contributing">Contributing</a>
@@ -1147,7 +1223,7 @@ podman exec braidphp-development composer test
                     </div>
                 </div>
                 <div class="command-panel code-panel">
-                    <div class="panel-topline"><span class="quickstart-label" data-i18n="development.commandsTitle">Commands</span><span class="code-badge">CI</span></div>
+                    <div class="panel-topline"><span class="quickstart-label" data-i18n="development.commandsTitle">Commands</span><span class="code-badge">CLI</span></div>
                     <pre><code class="language-bash">php tools/check-docs.php
 composer validate --strict
 composer check-platform-reqs
@@ -1156,9 +1232,8 @@ composer check-style
 composer test
 composer test:coverage
 composer coverage:check</code></pre>
-                    <p class="command-note" data-i18n="development.ciText">The CI workflow runs on PHP 8.4 and 8.5, uploads build/test-results/clover.xml to Codecov, and fails the local coverage gate if statements drop below 80%.</p>
+                    <p class="command-note" data-i18n="development.checksText">Run these commands from a repository checkout after composer install. The documentation check needs PHP DOM and proc_open; coverage needs Xdebug or PCOV.</p>
                     <p class="command-note" data-i18n="development.customizeText">Forward PHPUnit filters with composer test -- --filter AppTest. Override the coverage report and threshold with composer coverage:check -- build/test-results/clover.xml 90. PHPStan, PHPUnit, and PHP_CodeSniffer accept custom --configuration or --standard paths. Runtime options are independent of these development tools.</p>
-                    <p class="command-note" data-i18n="development.releaseText">For each release, align the changelog, citation, and documentation versions. Run every check above, review composer audit, and inspect composer archive. Publish any required PHPInjector release first and verify the dependency in a clean application. Tag and publish only after verification; package versions come from Git tags.</p>
                 </div>
             </div>
         </section>

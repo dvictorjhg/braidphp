@@ -11,11 +11,6 @@ use dvictorjhg\braidphp\Router\Http\UriNormalizer;
 #[CoversClass(UriNormalizer::class)]
 final class UriNormalizerTest extends TestCase
 {
-    public function testNormalizesScheme(): void
-    {
-        self::assertSame('https', UriNormalizer::normalizeScheme('HTTPS'));
-    }
-
     public function testNormalizesUserInfo(): void
     {
         self::assertSame('', UriNormalizer::normalizeUserInfo());
@@ -35,14 +30,11 @@ final class UriNormalizerTest extends TestCase
         self::assertSame('q=hello%20world', UriNormalizer::normalizeQuery('q=hello%20world'));
     }
 
-    public function testPreservesFragment(): void
+    public function testPreservesEncodedDelimitersAndEncodesInvalidEscapes(): void
     {
-        self::assertSame('section%201', UriNormalizer::normalizeFragment('section%201'));
-    }
-
-    public function testSplitsPath(): void
-    {
-        self::assertSame([], UriNormalizer::splitPath(''));
-        self::assertSame(['one', 'two'], UriNormalizer::splitPath('/one/two'));
+        self::assertSame('/a%2Fb/%252F/a+b', UriNormalizer::normalizePath('/a%2Fb/%252F/a+b'));
+        self::assertSame('q=a%26b%3Dc&plus=%2B', UriNormalizer::normalizeQuery('q=a%26b%3Dc&plus=%2B'));
+        self::assertSame('/space%20here/%25zz', UriNormalizer::normalizePath('/space here/%zz'));
+        self::assertSame('q=%25zz%20here', UriNormalizer::normalizeQuery('q=%zz here'));
     }
 }

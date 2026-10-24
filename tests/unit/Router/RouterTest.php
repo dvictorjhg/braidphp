@@ -39,6 +39,23 @@ class RouterTest extends TestCase
         $router->setRoutes(['']);
     }
 
+    public function testEncodedPathDelimitersAndLiteralPlusesStayWithinOneParameter(): void
+    {
+        $router = new Router();
+        $router->setRoutes(new Route(
+            httpMethod: HttpMethod::GET,
+            path: '/files/:name',
+            action: [TestController::class, 'get'],
+            pathMatch: 'full'
+        ));
+
+        foreach (['a%2Fb' => 'a/b', 'a+b' => 'a+b', 'a%252Fb' => 'a%2Fb'] as $encoded => $decoded) {
+            $match = $router->processRoutes(new Request(uri: '/files/' . $encoded, body: ''));
+            self::assertNotNull($match);
+            self::assertSame(['name' => $decoded], $match->params);
+        }
+    }
+
     public function testSetAndGetRoutes(): void
     {
         $router = new Router();

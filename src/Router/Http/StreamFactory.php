@@ -46,7 +46,7 @@ final class StreamFactory
             return $resource;
         }
 
-        if (\method_exists($resource, '__toString')) {
+        if ($resource instanceof \Stringable) {
             return self::create((string) $resource, $size);
         }
 

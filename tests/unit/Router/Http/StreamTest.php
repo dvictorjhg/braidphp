@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\Stream;
+use dvictorjhg\braidphp\Router\Http\StreamFactory;
 use dvictorjhg\braidphp\Router\Http\StreamException;
 use dvictorjhg\braidphp\tests\Mock\FailingStream;
 
@@ -95,6 +96,43 @@ final class StreamTest extends TestCase
         $stream->close();
     }
 
+    #[DataProvider('fileModes')]
+    public function testReportsNativeFileCapabilities(string $mode, bool $readable, bool $writable): void
+    {
+        $path = \tempnam(\sys_get_temp_dir(), 'braid-stream-');
+        self::assertNotFalse($path);
+        if (\str_starts_with($mode, 'x')) {
+            \unlink($path);
+        }
+        try {
+            $resource = \fopen($path, $mode);
+            self::assertIsResource($resource);
+            $stream = new Stream($resource);
+            self::assertSame($readable, $stream->isReadable());
+            self::assertSame($writable, $stream->isWritable());
+            if ($writable) {
+                self::assertSame(4, $stream->write('test'));
+            }
+            $stream->close();
+        } finally {
+            \unlink($path);
+        }
+    }
+
+    /** @return iterable<string, array{string, bool, bool}> */
+    public static function fileModes(): iterable
+    {
+        foreach (['r', 'w', 'a', 'x', 'c'] as $mode) {
+            foreach (['b', '+b', 'b+'] as $suffix) {
+                yield $mode . $suffix => [
+                    $mode . $suffix,
+                    $mode === 'r' || $suffix !== 'b',
+                    $mode !== 'r' || $suffix !== 'b',
+                ];
+            }
+        }
+    }
+
     public function testUsesExplicitSizeAndExposesMetadata(): void
     {
         $resource = $this->resourceFrom('hello');
@@ -146,7 +184,7 @@ final class StreamTest extends TestCase
 
     public function testRejectsNegativeReadLength(): void
     {
-        $stream = Stream::of('content');
+        $stream = StreamFactory::create('content');
 
         $this->expectException(StreamException::class);
         $this->expectExceptionMessage('Length parameter cannot be negative');
@@ -155,7 +193,7 @@ final class StreamTest extends TestCase
 
     public function testRejectsInvalidSeekWhence(): void
     {
-        $stream = Stream::of('content');
+        $stream = StreamFactory::create('content');
 
         $this->expectException(StreamException::class);
         $this->expectExceptionMessage('Unable to seek to stream position');
@@ -183,7 +221,7 @@ final class StreamTest extends TestCase
 
     public function testDetachedStreamHasNoResourceOperations(): void
     {
-        $stream = Stream::of('content');
+        $stream = StreamFactory::create('content');
         $detached = $stream->detach();
 
         self::assertIsResource($detached);
@@ -228,7 +266,7 @@ final class StreamTest extends TestCase
 
     public function testSerializesAndRestoresStream(): void
     {
-        $stream = Stream::of('content', 7);
+        $stream = StreamFactory::create('content', 7);
 
         $serialized = \serialize($stream);
         $restored = \unserialize($serialized);
@@ -242,7 +280,7 @@ final class StreamTest extends TestCase
 
     public function testSerializesAndRestoresDetachedStream(): void
     {
-        $stream = Stream::of('content');
+        $stream = StreamFactory::create('content');
         $stream->detach();
 
         $restored = \unserialize(\serialize($stream));
@@ -258,7 +296,7 @@ final class StreamTest extends TestCase
 
     public function testRejectsInvalidSerializedStreamData(): void
     {
-        $stream = Stream::of('content');
+        $stream = StreamFactory::create('content');
         $method = new \ReflectionMethod(Stream::class, '__unserialize');
 
         $this->expectException(\UnexpectedValueException::class);

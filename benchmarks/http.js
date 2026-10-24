@@ -41,6 +41,9 @@ export default function request() {
         'correct body': (result) => result.body === workload.body,
         'correct content type': (result) =>
             (result.headers['Content-Type'] || '').split(';')[0] === workload.type,
+        'correct feature header': (result) => __ENV.BENCH_PROFILE === 'features'
+            ? result.headers['X-Benchmark-Feature'] === 'service:enabled'
+            : result.headers['X-Benchmark-Feature'] === undefined,
     });
 }
 

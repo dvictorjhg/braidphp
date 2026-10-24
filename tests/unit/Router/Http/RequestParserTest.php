@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use dvictorjhg\braidphp\Router\Http\HttpOptions;
-use dvictorjhg\braidphp\Router\Http\Request;
 use dvictorjhg\braidphp\Router\Http\RequestParser;
 use dvictorjhg\braidphp\tests\Mock\FailingStream;
 
@@ -140,7 +139,7 @@ final class RequestParserTest extends TestCase
             "OPTIONS /resource HTTP/1.0\r\nHost: example.test\r\nOrigin: https://example.test\r\n\r\n"
         );
         try {
-            $request = Request::fromResource($resource);
+            $request = RequestParser::fromResource($resource);
             self::assertNotNull($request);
             self::assertSame('OPTIONS', $request->getMethod());
             self::assertSame('/resource', $request->getRequestTarget());
@@ -340,7 +339,7 @@ final class RequestParserTest extends TestCase
             $this->expectExceptionMessage($error);
         }
         try {
-            $request = Request::fromResource($resource, $options);
+            $request = RequestParser::fromResource($resource, $options);
             self::assertNotNull($request);
             self::assertSame('data', (string) $request->getBody());
         } finally {

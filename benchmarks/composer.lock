@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "baf741d46d4ac3f4cbbbbec71aaffa20",
+    "content-hash": "9a3ae370a82be8c69fbc6d78e49527da",
     "packages": [
         {
             "name": "dvictorjhg/braidphp",
@@ -12,14 +12,19 @@
             "dist": {
                 "type": "path",
                 "url": "..",
-                "reference": "f360666a84a266e3e85a1bf228368783722fdc69"
+                "reference": "2fd30e51e198506f26e0e65e34e7976bd1e6a266"
             },
             "require": {
-                "dvictorjhg/php-injector": "^1.0.1",
-                "php": "^8.4",
-                "psr/http-message": "^2.0"
+                "dvictorjhg/php-injector": "^1.0.5",
+                "php": "~8.4.27 || ^8.5.12",
+                "psr/http-factory": "^1.1",
+                "psr/http-message": "^2.0",
+                "psr/http-server-handler": "^1.0",
+                "psr/http-server-middleware": "^1.0",
+                "psr/log": "^3.0"
             },
             "provide": {
+                "psr/http-factory-implementation": "1.1",
                 "psr/http-message-implementation": "2.0"
             },
             "require-dev": {
@@ -31,7 +36,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -49,6 +54,8 @@
                 "exclude": [
                     "/Example/",
                     "/vendor/",
+                    "/benchmarks/vendor/",
+                    "/benchmarks/results/",
                     "/build/",
                     "/coverage/",
                     "/debug/",
@@ -115,20 +122,20 @@
         },
         {
             "name": "dvictorjhg/php-injector",
-            "version": "1.0.2",
+            "version": "1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dvictorjhg/php-injector.git",
-                "reference": "267b446d8bf954be2010ace0c690c1ab6dec3998"
+                "reference": "f8d2f87f2b190c9815cdbf2f6522b543b17629cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dvictorjhg/php-injector/zipball/267b446d8bf954be2010ace0c690c1ab6dec3998",
-                "reference": "267b446d8bf954be2010ace0c690c1ab6dec3998",
+                "url": "https://api.github.com/repos/dvictorjhg/php-injector/zipball/f8d2f87f2b190c9815cdbf2f6522b543b17629cb",
+                "reference": "f8d2f87f2b190c9815cdbf2f6522b543b17629cb",
                 "shasum": ""
             },
             "require": {
-                "php": "^8.3",
+                "php": "~8.3.36 || ~8.4.27 || ^8.5.12",
                 "psr/container": "^2.0"
             },
             "provide": {
@@ -174,7 +181,7 @@
                 "issues": "https://github.com/dvictorjhg/php-injector/issues",
                 "source": "https://github.com/dvictorjhg/php-injector"
             },
-            "time": "2026-08-31T11:43:24+00:00"
+            "time": "2026-10-23T12:48:05+00:00"
         },
         {
             "name": "fig/http-message-util",
@@ -940,7 +947,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.4"
+        "php": "~8.4.27 || ^8.5.12"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"

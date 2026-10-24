@@ -6,7 +6,6 @@ namespace dvictorjhg\braidphp\tests\unit;
 
 use dvictorjhg\braidphp\Router\Http\HttpMethod;
 use dvictorjhg\braidphp\Router\Classes\Route;
-use dvictorjhg\braidphp\Router\Classes\RouteArray;
 use dvictorjhg\braidphp\tests\Mock\TestController;
 use PHPUnit\Framework\TestCase;
 

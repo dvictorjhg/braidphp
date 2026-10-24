@@ -125,14 +125,16 @@ $repeats = filter_var(getenv('REPEATS') ?: '3', FILTER_VALIDATE_INT);
 $concurrency = array_map('intval', explode(',', getenv('VUS') ?: '1,16'));
 $port = filter_var(getenv('BENCH_PORT') ?: '8091', FILTER_VALIDATE_INT);
 $routeCount = filter_var(getenv('ROUTE_COUNT') ?: '3', FILTER_VALIDATE_INT);
+$profile = getenv('BENCH_PROFILE') ?: 'bare';
 if (
     !preg_match('/^[1-9][0-9]*s$/D', $duration)
     || $repeats === false || $repeats < 1
     || min($concurrency) < 1
     || $port === false || $port < 1024 || $port > 65535
     || $routeCount === false || $routeCount < 3 || $routeCount > 10_000
+    || !in_array($profile, ['bare', 'features'], true)
 ) {
-    throw new InvalidArgumentException('Use positive integer REPEATS/VUS, DURATION in seconds, ROUTE_COUNT from 3 to 10000, and a port from 1024 to 65535.');
+    throw new InvalidArgumentException('Use positive integer REPEATS/VUS, DURATION in seconds, ROUTE_COUNT from 3 to 10000, BENCH_PROFILE bare/features, and a port from 1024 to 65535.');
 }
 if (!is_file($directory . '/vendor/autoload.php')) {
     throw new RuntimeException('Run composer install in benchmarks first.');
@@ -148,6 +150,7 @@ if (is_dir($output) || !mkdir($output, 0777, true)) {
 
 $environment = array_merge(getenv(), ['XDEBUG_MODE' => 'off']);
 $environment['ROUTE_COUNT'] = (string) $routeCount;
+$environment['BENCH_PROFILE'] = $profile;
 unset($environment['PHP_CLI_SERVER_WORKERS']);
 $php = [
     PHP_BINARY, '-d', 'opcache.enable_cli=1', '-d', 'opcache.validate_timestamps=0',
@@ -168,7 +171,7 @@ $metadata = [
     'cpu' => capture(['lscpu']),
     'commit' => capture(['git', '-C', dirname($directory), 'rev-parse', 'HEAD']),
     'dirty_status' => capture(['git', '-C', dirname($directory), 'status', '--short']),
-    'source_diff_sha256' => hash('sha256', capture(['git', '-C', dirname($directory), 'diff', '--', 'src', 'composer.json'])),
+    'source_diff_sha256' => hash('sha256', capture(['git', '-C', dirname($directory), 'diff', 'HEAD', '--', 'src', 'composer.json'])),
     'source_sha256' => [],
     'peer_lock_sha256' => hash_file('sha256', $directory . '/composer.lock'),
     'autoload_classmap_sha256' => hash_file('sha256', $directory . '/vendor/composer/autoload_classmap.php'),
@@ -183,6 +186,7 @@ $metadata = [
     'repeats' => $repeats,
     'vus' => $concurrency,
     'handler_routes' => $routeCount,
+    'profile' => $profile,
     'connection_reuse' => false,
     'resources' => [
         'source' => 'Linux /proc/<server-pid>/stat and status; PHP server process only',
@@ -199,6 +203,20 @@ foreach ($sources as $source) {
     if ($source->isFile() && $source->getExtension() === 'php') {
         $metadata['source_sha256'][substr($source->getPathname(), strlen(dirname($directory)) + 1)] = hash_file('sha256', $source->getPathname());
     }
+}
+foreach ([
+    'run.php',
+    'http.js',
+    'braidphp.php',
+    'peers.php',
+    'features.php',
+    'payloads.php',
+    'fixtures/BenchmarkController.php',
+    'fixtures/BenchmarkModule.php',
+    'fixtures/BenchmarkFeatureValue.php',
+    'fixtures/BenchmarkFeatureService.php',
+] as $harness) {
+    $metadata['source_sha256']['benchmarks/' . $harness] = hash_file('sha256', $directory . '/' . $harness);
 }
 ksort($metadata['source_sha256']);
 file_put_contents($output . '/metadata.json', json_encode($metadata, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n");
@@ -326,6 +344,7 @@ file_put_contents($output . '/metadata.json', json_encode($metadata, JSON_PRETTY
 $report = "# HTTP Benchmark Results\n\n";
 $report .= "{$metadata['started_utc']}; $repeats repeats x $duration per cell, 1s warmup before each run.\n\n";
 $report .= "$routeCount handler routes per framework; plain PHP is a no-framework control without a route table.\n\n";
+$report .= "Profile: $profile. Features adds equivalent service-resolution and request/response filters; the PHP control also loads Composer/PHPInjector in that profile.\n\n";
 $report .= "Median throughput and median per-run percentiles; ranges are min-max throughput, not confidence intervals.\n\n";
 $report .= "Server CPU only (100% = one core), CPU microseconds per request, mean sampled RSS and maximum sampled RSS. RSS is sampled every approximately 100ms; short peaks may be missed. Resource windows include k6 launch/exit but exclude server startup and warmup.\n\n";
 $report .= "Lower resource cost is better for equivalent work and process history. CPU % alone is not a ranking: low utilization can also mean fewer requests are served. VUs describe the test, not a score.\n\n";

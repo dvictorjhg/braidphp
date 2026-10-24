@@ -95,7 +95,7 @@ $loader = require ' . $autoload . ';
 $loader->addPsr4("App\\\\", ' . $source . ');
 $app = new \\dvictorjhg\\braidphp\\Core\\App();
 $app->bootstrapModule(new \\App\\AppModule());
-$response = $app->handleRequest(new \\dvictorjhg\\braidphp\\Router\\Http\\Request(
+$response = $app->handle(new \\dvictorjhg\\braidphp\\Router\\Http\\Request(
     method: \\dvictorjhg\\braidphp\\Router\\Http\\HttpMethod::GET,
     uri: "/api/hello/Ada",
 ));

@@ -10,7 +10,7 @@ use Psr\Http\Message\StreamInterface;
 class Response extends Message implements ResponseInterface
 {
     /** @var array<int, string> HTTP status code phrases */
-    private static array $statusPhrases = [
+    private const array STATUS_PHRASES = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         102 => 'Processing',
@@ -89,11 +89,11 @@ class Response extends Message implements ResponseInterface
         string $protocolVersion = '1.1',
         protected string $reasonPhrase = ''
     ) {
-        self::validateStatus($statusCode, $reasonPhrase);
+        HttpSyntax::validateStatus($statusCode, $reasonPhrase);
         parent::__construct($headers, $body, $protocolVersion);
 
         if ($reasonPhrase === '') {
-            $reasonPhrase = self::$statusPhrases[$this->statusCode] ?? '';
+            $reasonPhrase = self::STATUS_PHRASES[$this->statusCode] ?? '';
         }
         $this->reasonPhrase = $reasonPhrase;
     }
@@ -107,15 +107,15 @@ class Response extends Message implements ResponseInterface
     #[\Override]
     public function withStatus(int $code, string $reasonPhrase = ''): static
     {
-        self::validateStatus($code, $reasonPhrase);
+        HttpSyntax::validateStatus($code, $reasonPhrase);
         if ($code === $this->statusCode && $reasonPhrase === $this->reasonPhrase) {
             return $this;
         }
 
         $static = clone $this;
-        $static->statusCode = (int) $code;
+        $static->statusCode = $code;
         if ($reasonPhrase === '') {
-            $reasonPhrase = self::$statusPhrases[$static->statusCode] ?? '';
+            $reasonPhrase = self::STATUS_PHRASES[$static->statusCode] ?? '';
         }
         $static->reasonPhrase = $reasonPhrase;
         return $static;
@@ -125,43 +125,5 @@ class Response extends Message implements ResponseInterface
     public function getReasonPhrase(): string
     {
         return $this->reasonPhrase;
-    }
-
-    private static function validateStatus(int $code, string $reasonPhrase): void
-    {
-        if ($code < 100 || $code > 599) {
-            throw new \InvalidArgumentException('HTTP status code must be between 100 and 599.');
-        }
-        if (\preg_match('/[^\x09\x20-\x7E\x80-\xFF]/', $reasonPhrase) === 1) {
-            throw new \InvalidArgumentException('Invalid HTTP reason phrase.');
-        }
-    }
-
-    public function __toString(): string
-    {
-        $responseStr = "HTTP/{$this->getProtocolVersion()} {$this->getStatusCode()} {$this->getReasonPhrase()}\r\n";
-
-        // Add headers
-        foreach ($this->getHeaders() as $name => $values) {
-            foreach ($values as $value) {
-                $responseStr .= "{$name}: {$value}\r\n";
-            }
-        }
-
-        // Add defaults required for the wire response.
-        if (!$this->hasHeader('Content-Type')) {
-            $responseStr .= "Content-Type: text/plain\r\n";
-        }
-
-        $body = $this->getBody();
-        $bodyContent = (string) $body;
-
-        if (!$this->hasHeader('Content-Length')) {
-            $responseStr .= "Content-Length: " . \strlen($bodyContent) . "\r\n";
-        }
-        $responseStr .= "\r\n";
-        $responseStr .= $bodyContent;
-
-        return $responseStr;
     }
 }

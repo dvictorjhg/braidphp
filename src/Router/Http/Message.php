@@ -23,17 +23,17 @@ abstract class Message implements MessageInterface
         mixed $body = null,
         protected string $protocolVersion = '1.1'
     ) {
-        self::validateProtocolVersion($protocolVersion);
+        HttpSyntax::validateProtocolVersion($protocolVersion);
         $this->headers = [];
         foreach ($headers as $name => $values) {
-            self::validateHeaderName($name);
+            HttpSyntax::validateHeaderName($name);
             $this->headers[\strtolower($name)] = [
                 'name' => $name,
-                'values' => self::normalizeHeaderValues($values)
+                'values' => HttpSyntax::normalizeHeaderValues($values)
             ];
         }
 
-        $this->body = $body instanceof StreamInterface ? $body : Stream::of($body);
+        $this->body = StreamFactory::create($body);
     }
 
     #[\Override]
@@ -45,7 +45,7 @@ abstract class Message implements MessageInterface
     #[\Override]
     public function withProtocolVersion(string $version): MessageInterface
     {
-        self::validateProtocolVersion($version);
+        HttpSyntax::validateProtocolVersion($version);
         if ($this->protocolVersion === $version) {
             return $this;
         }
@@ -98,13 +98,13 @@ abstract class Message implements MessageInterface
     #[\Override]
     public function withHeader(string $name, mixed $value): MessageInterface
     {
-        self::validateHeaderName($name);
+        HttpSyntax::validateHeaderName($name);
         $lowercaseName = \strtolower($name);
 
         $newInstance = clone $this;
         $newInstance->headers[$lowercaseName] = [
             'name' => $name,
-            'values' => self::normalizeHeaderValues($value)
+            'values' => HttpSyntax::normalizeHeaderValues($value)
         ];
         return $newInstance;
     }
@@ -115,19 +115,19 @@ abstract class Message implements MessageInterface
     #[\Override]
     public function withAddedHeader(string $name, mixed $value): MessageInterface
     {
-        self::validateHeaderName($name);
+        HttpSyntax::validateHeaderName($name);
         $lowercaseName = \strtolower($name);
         $newInstance = clone $this;
 
         if (isset($newInstance->headers[$lowercaseName])) {
             $newInstance->headers[$lowercaseName]['values'] = \array_merge(
                 $newInstance->headers[$lowercaseName]['values'],
-                self::normalizeHeaderValues($value)
+                HttpSyntax::normalizeHeaderValues($value)
             );
         } else {
             $newInstance->headers[$lowercaseName] = [
                 'name' => $name,
-                'values' => self::normalizeHeaderValues($value)
+                'values' => HttpSyntax::normalizeHeaderValues($value)
             ];
         }
 
@@ -161,40 +161,5 @@ abstract class Message implements MessageInterface
         $newInstance->body = $body;
 
         return $newInstance;
-    }
-
-    /**
-     * @param mixed $values Valid values are a string or an array of strings.
-     * @return list<string>
-     */
-    private static function normalizeHeaderValues(mixed $values): array
-    {
-        $values = \is_array($values) ? $values : [$values];
-        $normalizedValues = [];
-        foreach ($values as $value) {
-            if (!\is_string($value)) {
-                throw new \InvalidArgumentException('Header values must be strings.');
-            }
-            if (\preg_match('/[^\x09\x20-\x7E\x80-\xFF]/', $value) === 1) {
-                throw new \InvalidArgumentException('Invalid header value.');
-            }
-            $normalizedValues[] = $value;
-        }
-
-        return $normalizedValues;
-    }
-
-    private static function validateProtocolVersion(string $version): void
-    {
-        if (\preg_match('/^\d+(?:\.\d+)?$/D', $version) !== 1) {
-            throw new \InvalidArgumentException('Invalid HTTP protocol version.');
-        }
-    }
-
-    private static function validateHeaderName(string $name): void
-    {
-        if (\preg_match('/^[!#$%&\'*+.^_`|~0-9A-Za-z-]+$/D', $name) !== 1) {
-            throw new \InvalidArgumentException('Invalid header name.');
-        }
     }
 }

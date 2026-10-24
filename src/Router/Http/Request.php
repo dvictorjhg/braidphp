@@ -3,18 +3,15 @@
 namespace dvictorjhg\braidphp\Router\Http;
 
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
-class Request extends Message implements RequestInterface
+class Request extends ServerRequestState implements ServerRequestInterface
 {
     private string $method;
     private Uri $uri;
-    private string $requestTarget;
-    /** @var array<string, string> */
-    private array $routeParams = [];
-    /** @var array<string|int, mixed> */
-    private array $queryParams = [];
+    private ?string $requestTarget = null;
 
     /**
      * Initializes a new HTTP request instance.
@@ -31,6 +28,7 @@ class Request extends Message implements RequestInterface
      *                              Defaults to the headers retrieved from the server environment.
      * @param bool|float|int|object|resource|StreamInterface|string|null $body The body of the request.
      *                                                                         Defaults to reading from 'php://input'.
+        * @param array<string|int, mixed>|null $serverParams Explicit server parameters; null uses PHP globals.
      *
      * @throws \InvalidArgumentException If any of the inputs are invalid or cannot be processed.
      * @throws RequestException If the input stream (`php://input`) cannot be opened.
@@ -40,20 +38,24 @@ class Request extends Message implements RequestInterface
         HttpMethod|string|null $method = null,
         UriInterface|string|null $uri = null,
         array $headers = [],
-        mixed $body = null
+        mixed $body = null,
+        ?array $serverParams = null
     ) {
-        $serverProtocol = $_SERVER['SERVER_PROTOCOL'] ?? null;
+        $this->initializeServerParams($serverParams);
+        $serverProtocol = $this->serverParams['SERVER_PROTOCOL'] ?? null;
         $protocolVersion ??= \is_string($serverProtocol) && \str_contains($serverProtocol, '/')
             ? \explode('/', $serverProtocol, 2)[1]
             : '1.1';
 
-        $serverMethod = $_SERVER['REQUEST_METHOD'] ?? null;
+        $serverMethod = $this->serverParams['REQUEST_METHOD'] ?? null;
         $method ??= \is_string($serverMethod) ? $serverMethod : 'GET';
 
-        $serverUri = $_SERVER['REQUEST_URI'] ?? null;
+        $serverUri = $this->serverParams['REQUEST_URI'] ?? null;
         $uri ??= \is_string($serverUri) ? $serverUri : '/';
 
-        $headers = $headers ?: self::getHttpHeaders();
+        if ($headers === [] && $serverParams === null) {
+            $headers = self::getHttpHeaders();
+        }
 
         if ($body === null) {
             $resource = @\fopen('php://input', 'r');
@@ -67,24 +69,18 @@ class Request extends Message implements RequestInterface
 
         $this->uri = $uri instanceof Uri ? $uri : new Uri($uri);
 
-        $this->requestTarget = $this->filterRequestTarget((string) $this->uri);
-
         parent::__construct($headers, $body, $protocolVersion);
+
+        $this->initializeParsedBody(
+            method: $this->method,
+            useGlobals: $serverParams === null
+        );
 
         if (!$this->hasHeader('Host')) {
             $this->setHostHeaderFromUri();
         }
 
         \parse_str($this->uri->getQuery(), $this->queryParams);
-    }
-
-    /**
-     * @param resource $resource
-     * @return Request|null
-     */
-    public static function fromResource(mixed $resource, ?HttpOptions $options = null): ?Request
-    {
-        return RequestParser::fromResource($resource, $options);
     }
 
     /**
@@ -96,33 +92,22 @@ class Request extends Message implements RequestInterface
      */
     private function filterRequestTarget(string $requestTarget): string
     {
-        $originForm = $this->uri->getPath() . ($this->uri->getQuery() ? '?' . $this->uri->getQuery() : '');
-        $absoluteForm = $this->uri->getScheme() . '://' .
-            $this->uri->getAuthority() .
-            $this->uri->getPath() .
-            ($this->uri->getQuery() ? '?' . $this->uri->getQuery() : '');
-        $authorityForm = $this->uri->getAuthority();
-        $asteriskForm = '*';
-
-        $isOriginOrAbsoluteForm = $requestTarget === $originForm || $requestTarget === $absoluteForm;
-        $isConnectAndAuthorityForm = $this->method === 'CONNECT' && $requestTarget === $authorityForm;
-        $isOptionsAndAsteriskForm = $this->method === 'OPTIONS' && $requestTarget === $asteriskForm;
-
-        if (
-            ($this->method !== 'CONNECT' && $isOriginOrAbsoluteForm)
-            || $isConnectAndAuthorityForm
-            || $isOptionsAndAsteriskForm
-        ) {
-            return $requestTarget;
+        if ($requestTarget === '' || \preg_match('/[\x00-\x20\x7F]/', $requestTarget) === 1) {
+            throw new \InvalidArgumentException('Invalid request target.');
         }
 
-        throw new \InvalidArgumentException("Invalid target '$requestTarget' for '$this->method' method.");
+        return $requestTarget;
     }
 
     #[\Override]
     public function getRequestTarget(): string
     {
-        return $this->requestTarget;
+        if ($this->requestTarget !== null) {
+            return $this->requestTarget;
+        }
+        $path = $this->uri->getPath();
+        $query = $this->uri->getQuery();
+        return ($path === '' ? '/' : $path) . ($query === '' ? '' : '?' . $query);
     }
 
     #[\Override]
@@ -137,11 +122,11 @@ class Request extends Message implements RequestInterface
         return $newInstance;
     }
 
-    /** @throws \InvalidArgumentException for unsupported methods. */
+    /** @throws \InvalidArgumentException for invalid HTTP method tokens. */
     private function filterMethod(string $method): string
     {
-        if (!\in_array($method, \array_column(HttpMethod::cases(), 'name'), true)) {
-            throw new \InvalidArgumentException("Unsupported method given ($method).");
+        if (\preg_match("/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/D", $method) !== 1) {
+            throw new \InvalidArgumentException('Invalid HTTP method token.');
         }
 
         return $method;
@@ -154,7 +139,7 @@ class Request extends Message implements RequestInterface
     }
 
     #[\Override]
-    public function withMethod(string $method): RequestInterface
+    public function withMethod(string $method): static
     {
         if ($this->method === $method) {
             return $this;
@@ -174,21 +159,16 @@ class Request extends Message implements RequestInterface
     #[\Override]
     public function withUri(UriInterface $uri, $preserveHost = false): RequestInterface
     {
-        if ($this->uri === $uri) {
-            return $this;
-        }
-
         $newInstance = clone $this;
         $newInstance->uri = $uri instanceof Uri ? $uri : new Uri($uri);
-        $newInstance->requestTarget = $newInstance->filterRequestTarget((string) $newInstance->uri);
         $newInstance->queryParams = [];
         \parse_str($newInstance->uri->getQuery(), $newInstance->queryParams);
 
-        if (!$preserveHost) {
+        if (!$preserveHost || $this->getHeaderLine('Host') === '') {
             $newInstance->setHostHeaderFromUri();
         }
 
-        return $newInstance;
+        return $this->uri === $newInstance->uri && $this->headers === $newInstance->headers ? $this : $newInstance;
     }
 
     private function setHostHeaderFromUri(): void
@@ -237,36 +217,5 @@ class Request extends Message implements RequestInterface
         }
 
         return $rawHeaders;
-    }
-
-    /** @return array<string|int, mixed> */
-    public function getQueryParams(): array
-    {
-        return $this->queryParams;
-    }
-
-    public function getRouteParam(string $name): ?string
-    {
-        return $this->routeParams[$name] ?? null;
-    }
-
-    /** @return array<string, string> */
-    public function getRouteParams(): array
-    {
-        return $this->routeParams;
-    }
-
-    /**
-     * @param array<string, string> $params
-     */
-    public function withRouteParams(array $params): self
-    {
-        if ($params === $this->routeParams) {
-            return $this;
-        }
-
-        $newInstance = clone $this;
-        $newInstance->routeParams = $params;
-        return $newInstance;
     }
 }

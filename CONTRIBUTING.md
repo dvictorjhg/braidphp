@@ -61,8 +61,9 @@ composer test:coverage
 composer coverage:check
 ```
 
-The CI workflow runs these checks on PHP 8.4 and 8.5. GitHub issue forms and a
-pull request template are included to keep reports and reviews consistent.
+The CI workflow runs the Composer checks on PHP 8.4 and 8.5. Executable
+documentation is checked on PHP 8.5 only. GitHub issue forms and a pull request
+template are included to keep reports and reviews consistent.
 
 Tool options can be passed through Composer, for example
 `composer test -- --filter AppTest` and
